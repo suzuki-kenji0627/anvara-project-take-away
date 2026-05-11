@@ -22,7 +22,7 @@ router.get('/me', async (req: Request, res: Response) => {
 });
 
 // GET /api/auth/role/:userId - Get user role based on Sponsor/Publisher records
-router.get('/role/:userId', async (req: Request, res: Response) => {
+router.get('/role/:userId', async (req: Request<{ userId: string }>, res: Response) => {
   try {
     const { userId } = req.params;
 
