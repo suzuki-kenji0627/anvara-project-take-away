@@ -1,17 +1,23 @@
-import { Router, type Request, type Response, type IRouter } from 'express';
+import { Router, type Response, type IRouter } from 'express';
 import { prisma } from '../db.js';
 import { getParam } from '../utils/helpers.js';
+import { authMiddleware, roleMiddleware, type AuthRequest } from '../auth.js';
 
 const router: IRouter = Router();
 
-// GET /api/ad-slots - List available ad slots
-router.get('/', async (req: Request, res: Response) => {
+// GET /api/ad-slots - List ad slots
+// Publishers see only their own slots; sponsors see all available slots (marketplace) as per the requirement
+// TODO: However, the marketplace pages is also available to unauthenticated users, so what should we do?
+// Ideally, we should have two separate routes for the marketplace:
+// 1. /api/ad-slots - for authenticated users
+// 2. /api/ad-slots/public - for anyone (unauthenticated users)
+router.get('/', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
-    const { publisherId, type, available } = req.query;
+    const { type, available } = req.query;
 
     const adSlots = await prisma.adSlot.findMany({
       where: {
-        ...(publisherId && { publisherId: getParam(publisherId) }),
+        ...(req.user?.role === 'PUBLISHER' && { publisherId: req.user.publisherId }),
         ...(type && {
           type: type as string as 'DISPLAY' | 'VIDEO' | 'NATIVE' | 'NEWSLETTER' | 'PODCAST',
         }),
@@ -31,8 +37,8 @@ router.get('/', async (req: Request, res: Response) => {
   }
 });
 
-// GET /api/ad-slots/:id - Get single ad slot with details
-router.get('/:id', async (req: Request, res: Response) => {
+// GET /api/ad-slots/:id - Get single ad slot (any authenticated user — needed for marketplace)
+router.get('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     const id = getParam(req.params.id);
     const adSlot = await prisma.adSlot.findUnique({
@@ -59,23 +65,17 @@ router.get('/:id', async (req: Request, res: Response) => {
   }
 });
 
-// POST /api/ad-slots - Create new ad slot
-// BUG: This accepts 'dimensions' and 'pricingModel' fields that don't exist in Prisma schema
-// BUG: No input validation for basePrice (could be negative or zero)
-router.post('/', async (req: Request, res: Response) => {
+// POST /api/ad-slots - Create new ad slot (publishers only)
+router.post('/', authMiddleware, roleMiddleware(['PUBLISHER']), async (req: AuthRequest, res: Response) => {
   try {
-    const { name, description, type, basePrice, publisherId } = req.body;
+    const { name, description, type, basePrice } = req.body;
 
-    if (!name || !type || !basePrice || !publisherId) {
+    if (!name || !type || !basePrice) {
       res.status(400).json({
-        error: 'Name, type, basePrice, and publisherId are required',
+        error: 'Name, type, and basePrice are required',
       });
       return;
     }
-
-    // TODO: Add authentication middleware to verify user owns publisherId
-    // TODO: Validate that basePrice is positive
-    // TODO: Validate that 'type' is valid enum value
 
     const adSlot = await prisma.adSlot.create({
       data: {
@@ -83,7 +83,7 @@ router.post('/', async (req: Request, res: Response) => {
         description,
         type,
         basePrice,
-        publisherId,
+        publisherId: req.user!.publisherId,
       },
       include: {
         publisher: { select: { id: true, name: true } },
@@ -97,19 +97,12 @@ router.post('/', async (req: Request, res: Response) => {
   }
 });
 
-// POST /api/ad-slots/:id/book - Book an ad slot (simplified booking flow)
-// This marks the slot as unavailable and creates a simple booking record
-router.post('/:id/book', async (req: Request, res: Response) => {
+// POST /api/ad-slots/:id/book - Book an ad slot (sponsors only)
+router.post('/:id/book', authMiddleware, roleMiddleware(['SPONSOR']), async (req: AuthRequest, res: Response) => {
   try {
     const id = getParam(req.params.id);
-    const { sponsorId, message } = req.body;
+    const { message } = req.body;
 
-    if (!sponsorId) {
-      res.status(400).json({ error: 'sponsorId is required' });
-      return;
-    }
-
-    // Check if slot exists and is available
     const adSlot = await prisma.adSlot.findUnique({
       where: { id },
       include: { publisher: true },
@@ -125,7 +118,6 @@ router.post('/:id/book', async (req: Request, res: Response) => {
       return;
     }
 
-    // Mark slot as unavailable
     const updatedSlot = await prisma.adSlot.update({
       where: { id },
       data: { isAvailable: false },
@@ -134,9 +126,7 @@ router.post('/:id/book', async (req: Request, res: Response) => {
       },
     });
 
-    // In a real app, you'd create a Placement record here
-    // For now, we just mark it as booked
-    console.log(`Ad slot ${id} booked by sponsor ${sponsorId}. Message: ${message || 'None'}`);
+    console.log(`Ad slot ${id} booked by sponsor ${req.user!.sponsorId}. Message: ${message || 'None'}`);
 
     res.json({
       success: true,
@@ -149,10 +139,25 @@ router.post('/:id/book', async (req: Request, res: Response) => {
   }
 });
 
-// POST /api/ad-slots/:id/unbook - Reset ad slot to available (for testing)
-router.post('/:id/unbook', async (req: Request<{ id: string }>, res: Response) => {
+// POST /api/ad-slots/:id/unbook - Reset ad slot to available (publishers only)
+router.post('/:id/unbook', authMiddleware, roleMiddleware(['PUBLISHER']), async (req: AuthRequest, res: Response) => {
   try {
-    const { id } = req.params;
+    const id = getParam(req.params.id);
+
+    const adSlot = await prisma.adSlot.findUnique({
+      where: { id },
+      select: { publisherId: true },
+    });
+
+    if (!adSlot) {
+      res.status(404).json({ error: 'Ad slot not found' });
+      return;
+    }
+
+    if (adSlot.publisherId !== req.user!.publisherId) {
+      res.status(403).json({ error: 'Access denied' });
+      return;
+    }
 
     const updatedSlot = await prisma.adSlot.update({
       where: { id },

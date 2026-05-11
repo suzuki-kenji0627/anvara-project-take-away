@@ -4,14 +4,11 @@
 
 import { AdSlot, Campaign, DashboardStats, Placement } from './types';
 
-// TODO: Add authentication token to requests
-// Hint: Include credentials: 'include' for cookie-based auth, or
-// add Authorization header for token-based auth
-
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4291';
 
 export async function api<T>(endpoint: string, options?: RequestInit): Promise<T> {
   const res = await fetch(`${API_URL}${endpoint}`, {
+    credentials: 'include',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
     ...options,
   });
@@ -20,8 +17,11 @@ export async function api<T>(endpoint: string, options?: RequestInit): Promise<T
 }
 
 // Campaigns
-export const getCampaigns = (sponsorId?: string) =>
-  api<Campaign[]>(sponsorId ? `/api/campaigns?sponsorId=${sponsorId}` : '/api/campaigns');
+export const getCampaigns = (sponsorId?: string, cookieHeader?: string) =>
+  api<Campaign[]>(
+    sponsorId ? `/api/campaigns?sponsorId=${sponsorId}` : '/api/campaigns',
+    cookieHeader ? { headers: { Cookie: cookieHeader } } : undefined
+  );
 export const getCampaign = (id: string) => api<Campaign>(`/api/campaigns/${id}`);
 export const createCampaign = (data: Campaign) =>
   api('/api/campaigns', { method: 'POST', body: JSON.stringify(data) });

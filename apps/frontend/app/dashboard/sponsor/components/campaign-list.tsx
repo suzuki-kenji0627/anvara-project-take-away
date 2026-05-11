@@ -1,3 +1,4 @@
+import { cookies } from 'next/headers';
 import { getCampaigns } from '@/lib/api';
 import { CampaignCard } from './campaign-card';
 
@@ -6,7 +7,8 @@ interface CampaignListProps {
 }
 
 export async function CampaignList({ sponsorId }: CampaignListProps) {
-  const campaigns = await getCampaigns(sponsorId);
+  const cookieStore = await cookies();
+  const campaigns = await getCampaigns(sponsorId, cookieStore.toString());
 
   if (campaigns.length === 0) {
     return (
