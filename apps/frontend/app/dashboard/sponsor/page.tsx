@@ -1,8 +1,10 @@
+import { Suspense } from 'react';
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { auth } from '@/auth';
 import { getUserRole } from '@/lib/auth-helpers';
 import { CampaignList } from './components/campaign-list';
+import { CampaignListSkeleton } from './components/campaign-list-skeleton';
 
 export default async function SponsorDashboard() {
   const session = await auth.api.getSession({
@@ -13,9 +15,8 @@ export default async function SponsorDashboard() {
     redirect('/login');
   }
 
-  // Verify user has 'sponsor' role
   const roleData = await getUserRole(session.user.id);
-  if (roleData.role !== 'sponsor') {
+  if (roleData.role !== 'sponsor' || !roleData.sponsorId) {
     redirect('/');
   }
 
@@ -26,7 +27,9 @@ export default async function SponsorDashboard() {
         {/* TODO: Add CreateCampaignButton here */}
       </div>
 
-      <CampaignList />
+      <Suspense fallback={<CampaignListSkeleton />}>
+        <CampaignList sponsorId={roleData.sponsorId} />
+      </Suspense>
     </div>
   );
 }
