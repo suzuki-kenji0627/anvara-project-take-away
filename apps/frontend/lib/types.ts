@@ -26,6 +26,19 @@ export interface AdSlot {
   publisher?: { id: string; name: string };
 }
 
+export interface DashboardStats {
+  sponsors: number;
+  publishers: number;
+  activeCampaigns: number;
+  totalPlacements: number;
+  metrics: {
+    totalImpressions: number;
+    totalClicks: number;
+    totalConversions: number;
+    avgCtr: number | string;
+  };
+}
+
 export interface Placement {
   id: string;
   impressions: number;

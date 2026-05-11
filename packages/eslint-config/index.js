@@ -34,6 +34,7 @@ export const baseConfig = [
       '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
       '@typescript-eslint/no-explicit-any': 'error',
       'no-console': 'warn',
+      'no-undef': 'off', //https://typescript-eslint.io/troubleshooting/faqs/eslint/#i-get-errors-from-the-no-undef-rule-about-global-variables-not-being-defined-even-though-there-are-no-typescript-errors
     },
   },
   prettierConfig,
@@ -56,6 +57,7 @@ export const reactConfig = [
       globals: {
         ...globals.browser,
         ...globals.es2022,
+        process: 'readonly',
       },
     },
     plugins: {
@@ -66,6 +68,7 @@ export const reactConfig = [
       '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
       '@typescript-eslint/no-explicit-any': 'error',
       'no-console': 'warn',
+      'no-undef': 'off',
     },
   },
   {

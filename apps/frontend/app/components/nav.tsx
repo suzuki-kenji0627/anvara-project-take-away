@@ -21,9 +21,8 @@ export function Nav() {
         .then((res) => res.json())
         .then((data) => setRole(data.role))
         .catch(() => setRole(null));
-    } else {
-      setRole(null);
     }
+    // all usages of role is guarded by user &&. So it's safe
   }, [user?.id]);
 
   // TODO: Add active link styling using usePathname() from next/navigation
