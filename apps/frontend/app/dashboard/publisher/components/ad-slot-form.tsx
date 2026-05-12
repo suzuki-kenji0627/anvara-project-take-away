@@ -36,7 +36,7 @@ export function AdSlotForm({ adSlot, onSuccess }: AdSlotFormProps) {
   }, [state.success, onSuccess]);
 
   return (
-    <form action={formAction} className="space-y-3">
+    <form action={formAction} className="space-y-3 text-left">
       {adSlot && <input type="hidden" name="id" value={adSlot.id} />}
 
       {state.success && (

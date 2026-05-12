@@ -41,7 +41,7 @@ export function CampaignForm({ campaign, onSuccess }: CampaignFormProps) {
   }, [state.success, onSuccess]);
 
   return (
-    <form action={formAction} className="space-y-3">
+    <form action={formAction} className="space-y-3 text-left">
       {campaign && <input type="hidden" name="id" value={campaign.id} />}
 
       {state.success && (
