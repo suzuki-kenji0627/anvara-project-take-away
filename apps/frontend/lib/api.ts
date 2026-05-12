@@ -2,6 +2,13 @@ import { AdSlot, Campaign, DashboardStats, Placement } from './types';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4291';
 
+export class ApiError extends Error {
+  constructor(message: string, public status: number) {
+    super(message);
+    this.name = 'ApiError';
+  }
+}
+
 export async function api<T>(endpoint: string, options?: RequestInit): Promise<T> {
   const { headers: optionHeaders, ...restOptions } = options ?? {};
   const res = await fetch(`${API_URL}${endpoint}`, {
@@ -17,7 +24,7 @@ export async function api<T>(endpoint: string, options?: RequestInit): Promise<T
     } catch {
       // ignore parse errors on error responses
     }
-    throw new Error(message);
+    throw new ApiError(message, res.status);
   }
   if (res.status === 204) return undefined as T;
   return res.json();

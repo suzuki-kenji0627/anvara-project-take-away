@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { getAdSlots } from '@/lib/api';
+import { getAdSlots, ApiError } from '@/lib/api';
 import { AdSlot } from '@/lib/types';
 import { AdSlotGridSkeleton } from './ad-slot-grid-skeleton';
 
@@ -17,22 +17,62 @@ export function AdSlotGrid() {
   const [adSlots, setAdSlots] = useState<AdSlot[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isUnauthenticated, setIsUnauthenticated] = useState(false);
   const [retryKey, setRetryKey] = useState(0);
 
   useEffect(() => {
     getAdSlots()
       .then((slots) => { setAdSlots(slots); setLoading(false); })
-      .catch(() => { setError('Failed to load ad slots'); setLoading(false); });
+      .catch((err) => {
+        if (err instanceof ApiError && err.status === 401) {
+          setIsUnauthenticated(true);
+        } else {
+          setError('Failed to load ad slots');
+        }
+        setLoading(false);
+      });
   }, [retryKey]);
 
   const retry = () => {
     setLoading(true);
     setError(null);
+    setIsUnauthenticated(false);
     setRetryKey((k) => k + 1);
   };
 
   if (loading) {
     return <AdSlotGridSkeleton />;
+  }
+
+  if (isUnauthenticated) {
+    return (
+      <div className="rounded-lg border border-[--color-border] p-8 text-center">
+        <svg
+          className="mx-auto mb-3 h-10 w-10 text-[--color-muted]"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={1.5}
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"
+          />
+        </svg>
+        <h3 className="mb-1 font-semibold">Sign in to browse the marketplace</h3>
+        <p className="mb-4 text-sm text-[--color-muted]">
+          You need to be logged in to view available ad slots.
+        </p>
+        <a
+          href="/login"
+          className="inline-block rounded-lg px-4 py-2 text-sm font-medium text-white hover:opacity-90"
+          style={{ backgroundColor: 'var(--color-primary)' }}
+        >
+          Sign in
+        </a>
+      </div>
+    );
   }
 
   if (error) {
