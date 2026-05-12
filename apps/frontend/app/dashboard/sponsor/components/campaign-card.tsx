@@ -99,7 +99,7 @@ export function CampaignCard({ campaign }: CampaignCardProps) {
             </form>
             <button
               onClick={() => setIsConfirming(false)}
-              className="rounded px-3 py-1 text-xs text-[--color-muted] hover:text-[--color-text]"
+              className="cursor-pointer rounded px-3 py-1 text-xs text-[--color-muted] hover:text-[--color-text]"
             >
               Cancel
             </button>
@@ -108,13 +108,13 @@ export function CampaignCard({ campaign }: CampaignCardProps) {
           <div className="mt-3 flex gap-2 border-t border-[--color-border] pt-3">
             <button
               onClick={() => setIsEditing(true)}
-              className="cursor-pointer flex-1 rounded border border-[--color-border] py-1 text-xs font-medium hover:bg-gray-50"
+              className="cursor-pointer flex-1 rounded border border-white/15 bg-white/5 py-1 text-xs font-medium text-white hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-1 focus-visible:ring-offset-transparent transition-colors"
             >
               Edit
             </button>
             <button
               onClick={() => setIsConfirming(true)}
-              className="cursor-pointer flex-1 rounded border border-red-200 py-1 text-xs font-medium text-red-600 hover:bg-red-50"
+              className="flex-1 rounded border border-red-500/40 bg-red-500/5 py-1 text-xs font-medium text-red-400 hover:bg-red-500/12 hover:border-red-400/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:ring-offset-1 focus-visible:ring-offset-transparent transition-colors"
             >
               Delete
             </button>
