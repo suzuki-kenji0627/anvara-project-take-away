@@ -24,7 +24,7 @@ export default function Error({
       </svg>
       <h3 className="mb-1 font-semibold text-red-700">Something went wrong</h3>
       <p className="mb-4 text-sm text-red-600">
-        We couldn&apos;t load your ad slots. This is usually temporary.
+        We couldn&apos;t load your ad slots. This is usually temporary. Please try again later.
       </p>
       <button
         onClick={reset}
