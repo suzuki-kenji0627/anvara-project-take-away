@@ -83,7 +83,7 @@ router.post('/', authMiddleware, roleMiddleware(['PUBLISHER']), async (req: Auth
         description,
         type,
         basePrice,
-        publisherId: req.user!.publisherId,
+        publisherId: req.user!.publisherId!,
       },
       include: {
         publisher: { select: { id: true, name: true } },
@@ -178,7 +178,74 @@ router.post('/:id/unbook', authMiddleware, roleMiddleware(['PUBLISHER']), async 
   }
 });
 
-// TODO: Add PUT /api/ad-slots/:id endpoint
-// TODO: Add DELETE /api/ad-slots/:id endpoint
+// PUT /api/ad-slots/:id - Update ad slot (publishers only)
+router.put('/:id', authMiddleware, roleMiddleware(['PUBLISHER']), async (req: AuthRequest, res: Response) => {
+  try {
+    const id = getParam(req.params.id);
+
+    const existing = await prisma.adSlot.findUnique({ where: { id } });
+
+    if (!existing) {
+      res.status(404).json({ error: 'Ad slot not found' });
+      return;
+    }
+
+    if (existing.publisherId !== req.user!.publisherId) {
+      res.status(403).json({ error: 'Access denied' });
+      return;
+    }
+
+    const { name, description, type, position, width, height, basePrice, cpmFloor, isAvailable } = req.body;
+
+    const adSlot = await prisma.adSlot.update({
+      where: { id },
+      data: {
+        ...(name !== undefined && { name }),
+        ...(description !== undefined && { description }),
+        ...(type !== undefined && { type }),
+        ...(position !== undefined && { position }),
+        ...(width !== undefined && { width }),
+        ...(height !== undefined && { height }),
+        ...(basePrice !== undefined && { basePrice }),
+        ...(cpmFloor !== undefined && { cpmFloor }),
+        ...(isAvailable !== undefined && { isAvailable }),
+      },
+      include: {
+        publisher: { select: { id: true, name: true } },
+      },
+    });
+
+    res.json(adSlot);
+  } catch (error) {
+    console.error('Error updating ad slot:', error);
+    res.status(500).json({ error: 'Failed to update ad slot' });
+  }
+});
+
+// DELETE /api/ad-slots/:id - Delete ad slot (publishers only)
+router.delete('/:id', authMiddleware, roleMiddleware(['PUBLISHER']), async (req: AuthRequest, res: Response) => {
+  try {
+    const id = getParam(req.params.id);
+
+    const existing = await prisma.adSlot.findUnique({ where: { id } });
+
+    if (!existing) {
+      res.status(404).json({ error: 'Ad slot not found' });
+      return;
+    }
+
+    if (existing.publisherId !== req.user!.publisherId) {
+      res.status(403).json({ error: 'Access denied' });
+      return;
+    }
+
+    await prisma.adSlot.delete({ where: { id } });
+
+    res.status(204).send();
+  } catch (error) {
+    console.error('Error deleting ad slot:', error);
+    res.status(500).json({ error: 'Failed to delete ad slot' });
+  }
+});
 
 export default router;
