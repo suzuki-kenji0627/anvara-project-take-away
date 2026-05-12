@@ -5,6 +5,7 @@ import { auth } from '@/auth';
 import { getUserRole } from '@/lib/auth-helpers';
 import { CampaignList } from './components/campaign-list';
 import { CampaignListSkeleton } from './components/campaign-list-skeleton';
+import { CreateCampaignButton } from './components/create-campaign-button';
 
 export default async function SponsorDashboard() {
   const session = await auth.api.getSession({
@@ -22,9 +23,9 @@ export default async function SponsorDashboard() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-start justify-between gap-4">
         <h1 className="text-2xl font-bold">My Campaigns</h1>
-        {/* TODO: Add CreateCampaignButton here */}
+        <CreateCampaignButton />
       </div>
 
       <Suspense fallback={<CampaignListSkeleton />}>

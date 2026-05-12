@@ -19,6 +19,7 @@
 
   /* Neutral colors */
   --color-background: #ffffff;
+  --color-card: #ffffff;
   --color-foreground: #0f172a;
   --color-muted: #64748b;
   --color-border: #e2e8f0;
@@ -36,6 +37,7 @@
 @media (prefers-color-scheme: dark) {
   :root {
     --color-background: #0f172a;
+    --color-card: #1e293b;
     --color-foreground: #f8fafc;
     --color-muted: #94a3b8;
     --color-border: #334155;
