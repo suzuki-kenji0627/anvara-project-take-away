@@ -44,6 +44,18 @@
   }
 }
 
+/* Modal panel — explicit colors so CSS variable resolution order doesn't matter */
+[data-modal-panel] {
+  background-color: #ffffff;
+  color: #0f172a;
+}
+@media (prefers-color-scheme: dark) {
+  [data-modal-panel] {
+    background-color: #1e293b;
+    color: #f8fafc;
+  }
+}
+
 /* Base styles */
 body {
   background-color: var(--color-background);

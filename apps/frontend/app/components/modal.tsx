@@ -21,8 +21,8 @@ export function Modal({ title, onClose, children }: ModalProps) {
       onClick={onClose}
     >
       <div
+        data-modal-panel
         className="w-full max-w-lg rounded-xl shadow-xl"
-        style={{ backgroundColor: 'var(--color-card)' }}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between border-b border-[--color-border] px-5 py-4">
