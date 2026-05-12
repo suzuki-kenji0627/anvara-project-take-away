@@ -144,7 +144,28 @@ export function AdSlotDetail({ id }: Props) {
   };
 
   if (loading) {
-    return <div className="py-12 text-center text-[--color-muted]">Loading...</div>;
+    return (
+      <div className="animate-pulse space-y-6">
+        <div className="h-5 w-32 rounded bg-[--color-border]" />
+        <div className="rounded-lg border border-[--color-border] p-6">
+          <div className="mb-4 flex items-start justify-between">
+            <div className="space-y-2">
+              <div className="h-7 w-56 rounded bg-[--color-border]" />
+              <div className="h-4 w-36 rounded bg-[--color-border]" />
+            </div>
+            <div className="h-6 w-20 rounded bg-[--color-border]" />
+          </div>
+          <div className="mb-6 space-y-2">
+            <div className="h-4 w-full rounded bg-[--color-border]" />
+            <div className="h-4 w-3/4 rounded bg-[--color-border]" />
+          </div>
+          <div className="flex items-center justify-between border-t border-[--color-border] pt-4">
+            <div className="h-4 w-20 rounded bg-[--color-border]" />
+            <div className="h-8 w-28 rounded bg-[--color-border]" />
+          </div>
+        </div>
+      </div>
+    );
   }
 
   if (error || !adSlot) {
@@ -153,8 +174,24 @@ export function AdSlotDetail({ id }: Props) {
         <Link href="/marketplace" className="text-[--color-primary] hover:underline">
           ← Back to Marketplace
         </Link>
-        <div className="rounded border border-red-200 bg-red-50 p-4 text-red-600">
-          {error || 'Ad slot not found'}
+        <div className="rounded-lg border border-red-200 bg-red-50 p-8 text-center">
+          <svg
+            className="mx-auto mb-3 h-10 w-10 text-red-400"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={1.5}
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"
+            />
+          </svg>
+          <h3 className="mb-1 font-semibold text-red-700">Ad slot not found</h3>
+          <p className="text-sm text-red-600">
+            {error || 'This ad slot may have been removed or is no longer available.'}
+          </p>
         </div>
       </div>
     );
