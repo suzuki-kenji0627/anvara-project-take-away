@@ -118,7 +118,86 @@ router.post('/', authMiddleware, roleMiddleware(['SPONSOR']), async (req: AuthRe
   }
 });
 
-// TODO: Add PUT /api/campaigns/:id endpoint
-// Update campaign details (name, budget, dates, status, etc.)
+// PUT /api/campaigns/:id - Update campaign
+router.put('/:id', authMiddleware, roleMiddleware(['SPONSOR']), async (req: AuthRequest, res: Response) => {
+  try {
+    const id = getParam(req.params.id);
+
+    const existing = await prisma.campaign.findUnique({ where: { id } });
+
+    if (!existing) {
+      res.status(404).json({ error: 'Campaign not found' });
+      return;
+    }
+
+    if (existing.sponsorId !== req.user!.sponsorId) {
+      res.status(403).json({ error: 'Access denied' });
+      return;
+    }
+
+    const {
+      name,
+      description,
+      budget,
+      cpmRate,
+      cpcRate,
+      startDate,
+      endDate,
+      targetCategories,
+      targetRegions,
+      status,
+    } = req.body;
+
+    const campaign = await prisma.campaign.update({
+      where: { id },
+      data: {
+        ...(name !== undefined && { name }),
+        ...(description !== undefined && { description }),
+        ...(budget !== undefined && { budget }),
+        ...(cpmRate !== undefined && { cpmRate }),
+        ...(cpcRate !== undefined && { cpcRate }),
+        ...(startDate !== undefined && { startDate: new Date(startDate) }),
+        ...(endDate !== undefined && { endDate: new Date(endDate) }),
+        ...(targetCategories !== undefined && { targetCategories }),
+        ...(targetRegions !== undefined && { targetRegions }),
+        ...(status !== undefined && { status }),
+      },
+      include: {
+        sponsor: { select: { id: true, name: true } },
+      },
+    });
+
+    res.json(campaign);
+  } catch (error) {
+    console.error('Error updating campaign:', error);
+    res.status(500).json({ error: 'Failed to update campaign' });
+  }
+});
+
+// DELETE /api/campaigns/:id - Delete campaign
+router.delete('/:id', authMiddleware, roleMiddleware(['SPONSOR']), async (req: AuthRequest, res: Response) => {
+  try {
+    const id = getParam(req.params.id);
+
+    const existing = await prisma.campaign.findUnique({ where: { id } });
+
+    if (!existing) {
+      res.status(404).json({ error: 'Campaign not found' });
+      return;
+    }
+
+    if (existing.sponsorId !== req.user!.sponsorId) {
+      res.status(403).json({ error: 'Access denied' });
+      return;
+    }
+
+    await prisma.campaign.delete({ where: { id } });
+
+    res.status(204).send();
+  } catch (error) {
+    console.error('Error deleting campaign:', error);
+    res.status(500).json({ error: 'Failed to delete campaign' });
+  }
+});
 
 export default router;
