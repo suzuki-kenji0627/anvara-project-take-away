@@ -17,19 +17,19 @@ export function AdSlotGrid() {
   const [adSlots, setAdSlots] = useState<AdSlot[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  const load = () => {
-    setLoading(true);
-    setError(null);
-    getAdSlots()
-      .then(setAdSlots)
-      .catch(() => setError('Failed to load ad slots'))
-      .finally(() => setLoading(false));
-  };
+  const [retryKey, setRetryKey] = useState(0);
 
   useEffect(() => {
-    load();
-  }, []);
+    getAdSlots()
+      .then((slots) => { setAdSlots(slots); setLoading(false); })
+      .catch(() => { setError('Failed to load ad slots'); setLoading(false); });
+  }, [retryKey]);
+
+  const retry = () => {
+    setLoading(true);
+    setError(null);
+    setRetryKey((k) => k + 1);
+  };
 
   if (loading) {
     return <AdSlotGridSkeleton />;
@@ -56,7 +56,7 @@ export function AdSlotGrid() {
           There was a problem fetching ad slots. Please try again.
         </p>
         <button
-          onClick={load}
+          onClick={retry}
           className="rounded-lg px-4 py-2 text-sm font-medium text-white hover:opacity-90"
           style={{ backgroundColor: 'var(--color-primary)' }}
         >
