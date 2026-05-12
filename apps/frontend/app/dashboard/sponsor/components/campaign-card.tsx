@@ -82,8 +82,8 @@ export function CampaignCard({ campaign }: CampaignCardProps) {
         </div>
 
         <div className="text-xs text-[--color-muted]">
-          {new Date(campaign.startDate).toLocaleDateString()} -{' '}
-          {new Date(campaign.endDate).toLocaleDateString()}
+          {new Date(campaign.startDate).toLocaleDateString('en-US')} -{' '}
+          {new Date(campaign.endDate).toLocaleDateString('en-US')}
         </div>
 
         {deleteState.error && (
