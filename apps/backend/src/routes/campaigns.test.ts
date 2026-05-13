@@ -1,8 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import request from 'supertest';
 import express from 'express';
+import type { Response, NextFunction } from 'express';
+import type { Campaign } from '../db.js';
+import type { AuthRequest } from '../auth.js';
 
-// vi.hoisted ensures this object exists before vi.mock factories run
 const mockAuth = vi.hoisted(() => ({
   user: null as null | {
     id: string;
@@ -14,7 +16,7 @@ const mockAuth = vi.hoisted(() => ({
 }));
 
 vi.mock('../auth.js', () => ({
-  requireAuth: (req: any, res: any, next: any) => {
+  requireAuth: (req: AuthRequest, res: Response, next: NextFunction): void => {
     if (!mockAuth.user) {
       res.status(401).json({ error: 'Unauthorized' });
       return;
@@ -22,7 +24,7 @@ vi.mock('../auth.js', () => ({
     req.user = mockAuth.user;
     next();
   },
-  roleMiddleware: (roles: string[]) => (req: any, res: any, next: any) => {
+  roleMiddleware: (roles: string[]) => (req: AuthRequest, res: Response, next: NextFunction): void => {
     if (!req.user?.role || !roles.includes(req.user.role)) {
       res.status(403).json({ error: 'Insufficient permissions' });
       return;
@@ -83,8 +85,8 @@ describe('GET /api/campaigns', () => {
   });
 
   it('returns only the authenticated sponsor\'s campaigns', async () => {
-    const campaigns = [{ id: 'c-1', name: 'Campaign A', sponsorId: 'sponsor-1' }];
-    vi.mocked(prisma.campaign.findMany).mockResolvedValue(campaigns as any);
+    const campaigns = [{ id: 'c-1', name: 'Campaign A', sponsorId: 'sponsor-1' }] as unknown as Campaign[];
+    vi.mocked(prisma.campaign.findMany).mockResolvedValue(campaigns);
 
     const res = await request(app).get('/api/campaigns');
     expect(res.status).toBe(200);
@@ -109,18 +111,17 @@ describe('GET /api/campaigns/:id', () => {
   });
 
   it('returns 403 when campaign belongs to a different sponsor', async () => {
-    vi.mocked(prisma.campaign.findUnique).mockResolvedValue({
-      id: 'c-1',
-      sponsorId: 'other-sponsor',
-    } as any);
+    vi.mocked(prisma.campaign.findUnique).mockResolvedValue(
+      { id: 'c-1', sponsorId: 'other-sponsor' } as unknown as Campaign
+    );
     const res = await request(app).get('/api/campaigns/c-1');
     expect(res.status).toBe(403);
   });
 
   it('returns the campaign when it belongs to the authenticated sponsor', async () => {
-    const campaign = { id: 'c-1', name: 'My Campaign', sponsorId: 'sponsor-1' };
-    vi.mocked(prisma.campaign.findUnique).mockResolvedValue(campaign as any);
-
+    vi.mocked(prisma.campaign.findUnique).mockResolvedValue(
+      { id: 'c-1', name: 'My Campaign', sponsorId: 'sponsor-1' } as unknown as Campaign
+    );
     const res = await request(app).get('/api/campaigns/c-1');
     expect(res.status).toBe(200);
     expect(res.body.id).toBe('c-1');
@@ -152,8 +153,9 @@ describe('POST /api/campaigns', () => {
       startDate: '2025-01-01',
       endDate: '2025-12-31',
     };
-    const created = { id: 'c-new', ...payload, sponsorId: 'sponsor-1' };
-    vi.mocked(prisma.campaign.create).mockResolvedValue(created as any);
+    vi.mocked(prisma.campaign.create).mockResolvedValue(
+      { id: 'c-new', ...payload, sponsorId: 'sponsor-1' } as unknown as Campaign
+    );
 
     const res = await request(app).post('/api/campaigns').send(payload);
     expect(res.status).toBe(201);
@@ -170,20 +172,18 @@ describe('DELETE /api/campaigns/:id', () => {
   });
 
   it('returns 403 when campaign belongs to a different sponsor', async () => {
-    vi.mocked(prisma.campaign.findUnique).mockResolvedValue({
-      id: 'c-1',
-      sponsorId: 'other-sponsor',
-    } as any);
+    vi.mocked(prisma.campaign.findUnique).mockResolvedValue(
+      { id: 'c-1', sponsorId: 'other-sponsor' } as unknown as Campaign
+    );
     const res = await request(app).delete('/api/campaigns/c-1');
     expect(res.status).toBe(403);
   });
 
   it('deletes the campaign and returns 204', async () => {
-    vi.mocked(prisma.campaign.findUnique).mockResolvedValue({
-      id: 'c-1',
-      sponsorId: 'sponsor-1',
-    } as any);
-    vi.mocked(prisma.campaign.delete).mockResolvedValue({} as any);
+    vi.mocked(prisma.campaign.findUnique).mockResolvedValue(
+      { id: 'c-1', sponsorId: 'sponsor-1' } as unknown as Campaign
+    );
+    vi.mocked(prisma.campaign.delete).mockResolvedValue({ id: 'c-1' } as unknown as Campaign);
 
     const res = await request(app).delete('/api/campaigns/c-1');
     expect(res.status).toBe(204);
