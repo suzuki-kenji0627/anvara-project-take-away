@@ -1,5 +1,6 @@
 import { cookies } from 'next/headers';
 import { getCampaigns } from '@/lib/api';
+import type { Campaign } from '@/lib/types';
 import { CampaignCard } from './campaign-card';
 import { CreateCampaignButton } from './create-campaign-button';
 
@@ -9,7 +10,16 @@ interface CampaignListProps {
 
 export async function CampaignList({ sponsorId }: CampaignListProps) {
   const cookieStore = await cookies();
-  const campaigns = await getCampaigns(sponsorId, cookieStore.toString());
+  let campaigns: Campaign[];
+  try {
+    campaigns = await getCampaigns(sponsorId, cookieStore.toString());
+  } catch (err) {
+    // Log server-side so the error appears in deployment logs — the client only
+    // sees the error boundary UI and has no visibility into server component failures.
+    // eslint-disable-next-line no-console
+    console.error('[CampaignList] Failed to fetch campaigns:', err);
+    throw err;
+  }
 
   if (campaigns.length === 0) {
     return (

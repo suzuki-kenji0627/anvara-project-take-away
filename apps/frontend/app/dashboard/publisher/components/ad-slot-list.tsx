@@ -1,5 +1,6 @@
 import { cookies } from 'next/headers';
 import { getAdSlots } from '@/lib/api';
+import type { AdSlot } from '@/lib/types';
 import { AdSlotCard } from './ad-slot-card';
 import { CreateAdSlotButton } from './create-ad-slot-button';
 
@@ -9,7 +10,16 @@ interface AdSlotListProps {
 
 export async function AdSlotList({ publisherId }: AdSlotListProps) {
   const cookieStore = await cookies();
-  const adSlots = await getAdSlots(publisherId, cookieStore.toString());
+  let adSlots: AdSlot[];
+  try {
+    adSlots = await getAdSlots(publisherId, cookieStore.toString());
+  } catch (err) {
+    // Log server-side so the error appears in deployment logs — the client only
+    // sees the error boundary UI and has no visibility into server component failures.
+    // eslint-disable-next-line no-console
+    console.error('[AdSlotList] Failed to fetch ad slots:', err);
+    throw err;
+  }
 
   if (adSlots.length === 0) {
     return (
