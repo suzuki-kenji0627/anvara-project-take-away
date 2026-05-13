@@ -15,9 +15,9 @@ export function truncate(text: string, maxLength: number): string {
 }
 
 // Returns a debounced version of fn that delays invocation by `delay` ms
-export function debounce<T extends (...args: Parameters<T>) => void>(fn: T, delay: number): (...args: Parameters<T>) => void {
+export function debounce<T extends unknown[]>(fn: (...args: T) => void, delay: number): (...args: T) => void {
   let timer: ReturnType<typeof setTimeout> | undefined;
-  return (...args: Parameters<T>) => {
+  return (...args: T) => {
     clearTimeout(timer);
     timer = setTimeout(() => fn(...args), delay);
   };
