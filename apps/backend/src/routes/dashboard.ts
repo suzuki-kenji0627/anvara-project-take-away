@@ -5,7 +5,7 @@ import { requireAuth, type AuthRequest } from '../auth.js';
 const router: IRouter = Router();
 
 // GET /api/dashboard/stats - Get overall platform stats (authenticated users only)
-router.get('/stats', requireAuth, async (_req: AuthRequest, res: Response) => {
+router.get('/stats', requireAuth, async (_req: AuthRequest, res: Response): Promise<void> => {
   try {
     const [sponsorCount, publisherCount, activeCampaigns, totalPlacements, placementMetrics] =
       await Promise.all([
@@ -32,10 +32,7 @@ router.get('/stats', requireAuth, async (_req: AuthRequest, res: Response) => {
         totalClicks: placementMetrics._sum.clicks || 0,
         totalConversions: placementMetrics._sum.conversions || 0,
         avgCtr: placementMetrics._sum.impressions
-          ? (
-              ((placementMetrics._sum.clicks || 0) / placementMetrics._sum.impressions) *
-              100
-            ).toFixed(2)
+          ? parseFloat((((placementMetrics._sum.clicks || 0) / placementMetrics._sum.impressions) * 100).toFixed(2))
           : 0,
       },
     });

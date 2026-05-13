@@ -6,7 +6,7 @@ import { requireAuth, type AuthRequest } from '../auth.js';
 const router: IRouter = Router();
 
 // GET /api/publishers - List all publishers (authenticated users only)
-router.get('/', requireAuth, async (_req: AuthRequest, res: Response) => {
+router.get('/', requireAuth, async (_req: AuthRequest, res: Response): Promise<void> => {
   try {
     const publishers = await prisma.publisher.findMany({
       include: {
@@ -24,7 +24,7 @@ router.get('/', requireAuth, async (_req: AuthRequest, res: Response) => {
 });
 
 // GET /api/publishers/:id - Get single publisher with ad slots (authenticated users only)
-router.get('/:id', requireAuth, async (req: AuthRequest, res: Response) => {
+router.get('/:id', requireAuth, async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const id = getParam(req.params.id);
     const publisher = await prisma.publisher.findUnique({

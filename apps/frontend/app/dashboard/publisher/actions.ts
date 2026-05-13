@@ -7,7 +7,6 @@ import {
   updateAdSlot as apiUpdateAdSlot,
   deleteAdSlot as apiDeleteAdSlot,
 } from '@/lib/api';
-import type { AdSlot } from '@/lib/types';
 
 export type ActionState = {
   error?: string;
@@ -15,19 +14,25 @@ export type ActionState = {
   success?: boolean;
 };
 
-const VALID_TYPES = ['DISPLAY', 'VIDEO', 'NEWSLETTER', 'PODCAST'];
+const VALID_TYPES = ['DISPLAY', 'VIDEO', 'NEWSLETTER', 'PODCAST'] as const;
+type AdSlotType = typeof VALID_TYPES[number];
+
+function getString(fd: FormData, key: string): string | null {
+  const v = fd.get(key);
+  return typeof v === 'string' ? v : null;
+}
 
 export async function saveAdSlot(prevState: ActionState, formData: FormData): Promise<ActionState> {
-  const id = formData.get('id') as string | null;
-  const name = (formData.get('name') as string)?.trim();
-  const description = (formData.get('description') as string)?.trim();
-  const type = formData.get('type') as string;
-  const basePriceRaw = formData.get('basePrice') as string;
+  const id = getString(formData, 'id');
+  const name = getString(formData, 'name')?.trim() ?? '';
+  const description = getString(formData, 'description')?.trim();
+  const type = getString(formData, 'type') ?? '';
+  const basePriceRaw = getString(formData, 'basePrice') ?? '';
   const basePrice = parseFloat(basePriceRaw);
 
   const fieldErrors: Record<string, string> = {};
   if (!name) fieldErrors.name = 'Name is required';
-  if (!type || !VALID_TYPES.includes(type)) fieldErrors.type = 'Type is required';
+  if (!type || !(VALID_TYPES as readonly string[]).includes(type)) fieldErrors.type = 'Type is required';
   if (!basePriceRaw || isNaN(basePrice) || basePrice <= 0) {
     fieldErrors.basePrice = 'Base price must be greater than 0';
   }
@@ -36,7 +41,7 @@ export async function saveAdSlot(prevState: ActionState, formData: FormData): Pr
 
   const cookieStore = await cookies();
   const cookieHeader = cookieStore.toString();
-  const payload = { name, description: description || undefined, type: type as AdSlot['type'], basePrice };
+  const payload = { name, description: description || undefined, type: type as AdSlotType, basePrice };
 
   try {
     if (id) {
@@ -53,10 +58,10 @@ export async function saveAdSlot(prevState: ActionState, formData: FormData): Pr
 }
 
 export async function deleteAdSlotAction(
-  prevState: ActionState,
+  _prevState: ActionState,
   formData: FormData
 ): Promise<ActionState> {
-  const id = formData.get('id') as string;
+  const id = getString(formData, 'id');
   if (!id) return { error: 'Missing ad slot ID' };
 
   const cookieStore = await cookies();

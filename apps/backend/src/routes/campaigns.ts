@@ -7,13 +7,19 @@ import { requireAuth, roleMiddleware, type AuthRequest } from '../auth.js';
 const router: IRouter = Router();
 
 // GET /api/campaigns - List campaigns for the authenticated sponsor
-router.get('/', requireAuth, roleMiddleware(['SPONSOR']), async (req: AuthRequest, res: Response) => {
+router.get('/', requireAuth, roleMiddleware(['SPONSOR']), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
+    const sponsorId = req.user?.sponsorId;
+    if (!sponsorId) {
+      res.status(403).json({ error: 'Sponsor profile not found' });
+      return;
+    }
+
     const { status } = req.query;
 
     const campaigns = await prisma.campaign.findMany({
       where: {
-        sponsorId: req.user!.sponsorId,
+        sponsorId,
         ...(isEnumValue(status, CampaignStatus) && { status }),
       },
       include: {
@@ -31,8 +37,14 @@ router.get('/', requireAuth, roleMiddleware(['SPONSOR']), async (req: AuthReques
 });
 
 // GET /api/campaigns/:id - Get single campaign (must belong to authenticated sponsor)
-router.get('/:id', requireAuth, roleMiddleware(['SPONSOR']), async (req: AuthRequest, res: Response) => {
+router.get('/:id', requireAuth, roleMiddleware(['SPONSOR']), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
+    const sponsorId = req.user?.sponsorId;
+    if (!sponsorId) {
+      res.status(403).json({ error: 'Sponsor profile not found' });
+      return;
+    }
+
     const id = getParam(req.params.id);
     const campaign = await prisma.campaign.findUnique({
       where: { id },
@@ -48,13 +60,12 @@ router.get('/:id', requireAuth, roleMiddleware(['SPONSOR']), async (req: AuthReq
       },
     });
 
-
     if (!campaign) {
       res.status(404).json({ error: 'Campaign not found' });
       return;
     }
 
-    if (campaign?.sponsorId !== req.user!.sponsorId) {
+    if (campaign.sponsorId !== sponsorId) {
       res.status(403).json({ error: 'Access denied' });
       return;
     }
@@ -67,8 +78,14 @@ router.get('/:id', requireAuth, roleMiddleware(['SPONSOR']), async (req: AuthReq
 });
 
 // POST /api/campaigns - Create new campaign for the authenticated sponsor
-router.post('/', requireAuth, roleMiddleware(['SPONSOR']), async (req: AuthRequest, res: Response) => {
+router.post('/', requireAuth, roleMiddleware(['SPONSOR']), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
+    const sponsorId = req.user?.sponsorId;
+    if (!sponsorId) {
+      res.status(403).json({ error: 'Sponsor profile not found' });
+      return;
+    }
+
     const {
       name,
       description,
@@ -88,12 +105,6 @@ router.post('/', requireAuth, roleMiddleware(['SPONSOR']), async (req: AuthReque
       return;
     }
 
-    const user = req?.user;
-    if (!user?.sponsorId) {
-      res.status(403).json({ error: 'Only sponsors can create campaigns' });
-      return;
-    }
-
     const campaign = await prisma.campaign.create({
       data: {
         name,
@@ -105,7 +116,7 @@ router.post('/', requireAuth, roleMiddleware(['SPONSOR']), async (req: AuthReque
         endDate: new Date(endDate),
         targetCategories: targetCategories || [],
         targetRegions: targetRegions || [],
-        sponsorId: user.sponsorId,
+        sponsorId,
       },
       include: {
         sponsor: { select: { id: true, name: true } },
@@ -120,8 +131,14 @@ router.post('/', requireAuth, roleMiddleware(['SPONSOR']), async (req: AuthReque
 });
 
 // PUT /api/campaigns/:id - Update campaign
-router.put('/:id', requireAuth, roleMiddleware(['SPONSOR']), async (req: AuthRequest, res: Response) => {
+router.put('/:id', requireAuth, roleMiddleware(['SPONSOR']), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
+    const sponsorId = req.user?.sponsorId;
+    if (!sponsorId) {
+      res.status(403).json({ error: 'Sponsor profile not found' });
+      return;
+    }
+
     const id = getParam(req.params.id);
 
     const existing = await prisma.campaign.findUnique({ where: { id } });
@@ -131,7 +148,7 @@ router.put('/:id', requireAuth, roleMiddleware(['SPONSOR']), async (req: AuthReq
       return;
     }
 
-    if (existing.sponsorId !== req.user!.sponsorId) {
+    if (existing.sponsorId !== sponsorId) {
       res.status(403).json({ error: 'Access denied' });
       return;
     }
@@ -176,8 +193,14 @@ router.put('/:id', requireAuth, roleMiddleware(['SPONSOR']), async (req: AuthReq
 });
 
 // DELETE /api/campaigns/:id - Delete campaign
-router.delete('/:id', requireAuth, roleMiddleware(['SPONSOR']), async (req: AuthRequest, res: Response) => {
+router.delete('/:id', requireAuth, roleMiddleware(['SPONSOR']), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
+    const sponsorId = req.user?.sponsorId;
+    if (!sponsorId) {
+      res.status(403).json({ error: 'Sponsor profile not found' });
+      return;
+    }
+
     const id = getParam(req.params.id);
 
     const existing = await prisma.campaign.findUnique({ where: { id } });
@@ -187,7 +210,7 @@ router.delete('/:id', requireAuth, roleMiddleware(['SPONSOR']), async (req: Auth
       return;
     }
 
-    if (existing.sponsorId !== req.user!.sponsorId) {
+    if (existing.sponsorId !== sponsorId) {
       res.status(403).json({ error: 'Access denied' });
       return;
     }

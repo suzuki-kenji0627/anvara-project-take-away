@@ -6,7 +6,7 @@ import { requireAuth, type AuthRequest } from '../auth.js';
 const router: IRouter = Router();
 
 // GET /api/sponsors - List sponsors (authenticated users only)
-router.get('/', requireAuth, async (_req: AuthRequest, res: Response) => {
+router.get('/', requireAuth, async (_req: AuthRequest, res: Response): Promise<void> => {
   try {
     const sponsors = await prisma.sponsor.findMany({
       include: {
@@ -24,7 +24,7 @@ router.get('/', requireAuth, async (_req: AuthRequest, res: Response) => {
 });
 
 // GET /api/sponsors/:id - Get own sponsor profile (ownership required)
-router.get('/:id', requireAuth, async (req: AuthRequest, res: Response) => {
+router.get('/:id', requireAuth, async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const id = getParam(req.params.id);
 
@@ -61,7 +61,7 @@ router.get('/:id', requireAuth, async (req: AuthRequest, res: Response) => {
 });
 
 // POST /api/sponsors - Create sponsor profile for the authenticated user
-router.post('/', requireAuth, async (req: AuthRequest, res: Response) => {
+router.post('/', requireAuth, async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { name, email, website, logo, description, industry } = req.body;
 
@@ -75,8 +75,14 @@ router.post('/', requireAuth, async (req: AuthRequest, res: Response) => {
       return;
     }
 
+    const userId = req.user?.id;
+    if (!userId) {
+      res.status(403).json({ error: 'User not found' });
+      return;
+    }
+
     const sponsor = await prisma.sponsor.create({
-      data: { name, email, website, logo, description, industry, userId: req.user!.id },
+      data: { name, email, website, logo, description, industry, userId },
     });
 
     res.status(201).json(sponsor);

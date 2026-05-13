@@ -14,15 +14,20 @@ export type ActionState = {
   success?: boolean;
 };
 
+function getString(fd: FormData, key: string): string | null {
+  const v = fd.get(key);
+  return typeof v === 'string' ? v : null;
+}
+
 export async function saveCampaign(prevState: ActionState, formData: FormData): Promise<ActionState> {
-  const id = formData.get('id') as string | null;
-  const name = (formData.get('name') as string)?.trim();
-  const description = (formData.get('description') as string)?.trim();
-  const budgetRaw = formData.get('budget') as string;
-  const startDate = (formData.get('startDate') as string)?.trim();
-  const endDate = (formData.get('endDate') as string)?.trim();
-  const cpmRateRaw = (formData.get('cpmRate') as string)?.trim();
-  const cpcRateRaw = (formData.get('cpcRate') as string)?.trim();
+  const id = getString(formData, 'id');
+  const name = getString(formData, 'name')?.trim() ?? '';
+  const description = getString(formData, 'description')?.trim();
+  const budgetRaw = getString(formData, 'budget') ?? '';
+  const startDate = getString(formData, 'startDate')?.trim() ?? '';
+  const endDate = getString(formData, 'endDate')?.trim() ?? '';
+  const cpmRateRaw = getString(formData, 'cpmRate')?.trim();
+  const cpcRateRaw = getString(formData, 'cpcRate')?.trim();
 
   const budget = parseFloat(budgetRaw);
   const fieldErrors: Record<string, string> = {};
@@ -69,7 +74,7 @@ export async function deleteCampaignAction(
   prevState: ActionState,
   formData: FormData
 ): Promise<ActionState> {
-  const id = formData.get('id') as string;
+  const id = getString(formData, 'id');
   if (!id) return { error: 'Missing campaign ID' };
 
   const cookieStore = await cookies();

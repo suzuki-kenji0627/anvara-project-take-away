@@ -61,7 +61,7 @@ export async function requireAuth(req: AuthRequest, res: Response, next: NextFun
   }
 }
 
-export function roleMiddleware(allowedRoles: Array<'SPONSOR' | 'PUBLISHER'>) {
+export function roleMiddleware(allowedRoles: Array<'SPONSOR' | 'PUBLISHER'>): (req: AuthRequest, res: Response, next: NextFunction) => void {
   return (req: AuthRequest, res: Response, next: NextFunction): void => {
     if (!req.user?.role || !allowedRoles.includes(req.user.role)) {
       res.status(403).json({ error: 'Insufficient permissions' });

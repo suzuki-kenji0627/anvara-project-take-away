@@ -4,8 +4,7 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { authClient } from '@/auth-client';
 import { truncate } from '@/lib/utils';
-
-type UserRole = 'sponsor' | 'publisher' | null;
+import type { UserRole } from '@/lib/auth-helpers';
 
 export function Nav() {
   const { data: session, isPending } = authClient.useSession();

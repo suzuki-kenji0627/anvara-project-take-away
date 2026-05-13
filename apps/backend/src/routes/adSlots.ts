@@ -9,11 +9,17 @@ const router: IRouter = Router();
 // GET /api/ad-slots - List the authenticated publisher's own ad slots
 router.get('/', requireAuth, roleMiddleware(['PUBLISHER']), async (req: AuthRequest, res: Response) => {
   try {
+    const publisherId = req.user?.publisherId;
+    if (!publisherId) {
+      res.status(403).json({ error: 'Publisher profile not found' });
+      return;
+    }
+
     const { type, available } = req.query;
 
     const adSlots = await prisma.adSlot.findMany({
       where: {
-        publisherId: req.user!.publisherId!,
+        publisherId,
         ...(isEnumValue(type, AdSlotType) && { type }),
         ...(available === 'true' && { isAvailable: true }),
       },
@@ -35,9 +41,11 @@ router.get('/', requireAuth, roleMiddleware(['PUBLISHER']), async (req: AuthRequ
 // Publishers see their own available slots; sponsors see all available slots
 router.get('/available', requireAuth, async (req: AuthRequest, res: Response) => {
   try {
+    const publisherId = req.user?.publisherId
+
     const where =
-      req.user?.role === 'PUBLISHER'
-        ? { isAvailable: true, publisherId: req.user.publisherId! }
+      req.user?.role === 'PUBLISHER' && publisherId
+        ? { isAvailable: true, publisherId: publisherId }
         : { isAvailable: true };
 
     const adSlots = await prisma.adSlot.findMany({
@@ -93,6 +101,12 @@ router.get('/:id', requireAuth, async (req: AuthRequest, res: Response) => {
 // POST /api/ad-slots - Create new ad slot (publishers only)
 router.post('/', requireAuth, roleMiddleware(['PUBLISHER']), async (req: AuthRequest, res: Response) => {
   try {
+    const publisherId = req.user?.publisherId;
+    if (!publisherId) {
+      res.status(403).json({ error: 'Publisher profile not found' });
+      return;
+    }
+
     const { name, description, type, basePrice } = req.body;
 
     if (!name || !type || !basePrice) {
@@ -108,7 +122,7 @@ router.post('/', requireAuth, roleMiddleware(['PUBLISHER']), async (req: AuthReq
         description,
         type,
         basePrice,
-        publisherId: req.user!.publisherId!,
+        publisherId,
       },
       include: {
         publisher: { select: { id: true, name: true } },
@@ -151,7 +165,7 @@ router.post('/:id/book', requireAuth, roleMiddleware(['SPONSOR']), async (req: A
       },
     });
 
-    console.log(`Ad slot ${id} booked by sponsor ${req.user!.sponsorId}. Message: ${message || 'None'}`);
+    console.log(`Ad slot ${id} booked by sponsor ${req.user?.sponsorId ?? 'unknown'}. Message: ${message || 'None'}`);
 
     res.json({
       success: true,
@@ -167,6 +181,12 @@ router.post('/:id/book', requireAuth, roleMiddleware(['SPONSOR']), async (req: A
 // POST /api/ad-slots/:id/unbook - Reset ad slot to available (publishers only)
 router.post('/:id/unbook', requireAuth, roleMiddleware(['PUBLISHER']), async (req: AuthRequest, res: Response) => {
   try {
+    const publisherId = req.user?.publisherId;
+    if (!publisherId) {
+      res.status(403).json({ error: 'Publisher profile not found' });
+      return;
+    }
+
     const id = getParam(req.params.id);
 
     const adSlot = await prisma.adSlot.findUnique({
@@ -179,7 +199,7 @@ router.post('/:id/unbook', requireAuth, roleMiddleware(['PUBLISHER']), async (re
       return;
     }
 
-    if (adSlot.publisherId !== req.user!.publisherId) {
+    if (adSlot.publisherId !== publisherId) {
       res.status(403).json({ error: 'Access denied' });
       return;
     }
@@ -206,6 +226,12 @@ router.post('/:id/unbook', requireAuth, roleMiddleware(['PUBLISHER']), async (re
 // PUT /api/ad-slots/:id - Update ad slot (publishers only)
 router.put('/:id', requireAuth, roleMiddleware(['PUBLISHER']), async (req: AuthRequest, res: Response) => {
   try {
+    const publisherId = req.user?.publisherId;
+    if (!publisherId) {
+      res.status(403).json({ error: 'Publisher profile not found' });
+      return;
+    }
+
     const id = getParam(req.params.id);
 
     const existing = await prisma.adSlot.findUnique({ where: { id } });
@@ -215,7 +241,7 @@ router.put('/:id', requireAuth, roleMiddleware(['PUBLISHER']), async (req: AuthR
       return;
     }
 
-    if (existing.publisherId !== req.user!.publisherId) {
+    if (existing.publisherId !== publisherId) {
       res.status(403).json({ error: 'Access denied' });
       return;
     }
@@ -250,6 +276,12 @@ router.put('/:id', requireAuth, roleMiddleware(['PUBLISHER']), async (req: AuthR
 // DELETE /api/ad-slots/:id - Delete ad slot (publishers only)
 router.delete('/:id', requireAuth, roleMiddleware(['PUBLISHER']), async (req: AuthRequest, res: Response) => {
   try {
+    const publisherId = req.user?.publisherId;
+    if (!publisherId) {
+      res.status(403).json({ error: 'Publisher profile not found' });
+      return;
+    }
+
     const id = getParam(req.params.id);
 
     const existing = await prisma.adSlot.findUnique({ where: { id } });
@@ -259,7 +291,7 @@ router.delete('/:id', requireAuth, roleMiddleware(['PUBLISHER']), async (req: Au
       return;
     }
 
-    if (existing.publisherId !== req.user!.publisherId) {
+    if (existing.publisherId !== publisherId) {
       res.status(403).json({ error: 'Access denied' });
       return;
     }

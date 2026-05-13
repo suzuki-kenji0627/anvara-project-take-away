@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { getAdSlot } from '@/lib/api';
 import { authClient } from '@/auth-client';
 import { cn, formatPrice, logger } from '@/lib/utils';
+import type { RoleData } from '@/lib/auth-helpers';
 
 interface AdSlot {
   id: string;
@@ -26,12 +27,6 @@ interface User {
   email: string;
 }
 
-interface RoleInfo {
-  role: 'sponsor' | 'publisher' | null;
-  sponsorId?: string;
-  publisherId?: string;
-  name?: string;
-}
 
 const typeColors: Record<string, string> = {
   DISPLAY: 'bg-blue-100 text-blue-700',
@@ -49,7 +44,7 @@ export function AdSlotDetail({ id }: Props) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
-  const [roleInfo, setRoleInfo] = useState<RoleInfo | null>(null);
+  const [roleInfo, setRoleInfo] = useState<RoleData | null>(null);
   const [roleLoading, setRoleLoading] = useState(true);
   const [message, setMessage] = useState('');
   const [booking, setBooking] = useState(false);

@@ -8,7 +8,7 @@ const router: IRouter = Router();
 
 // GET /api/placements - List placements scoped to the authenticated user
 // Sponsors see placements for their own campaigns; publishers see placements for their own ad slots
-router.get('/', requireAuth, async (req: AuthRequest, res: Response) => {
+router.get('/', requireAuth, async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     if (!req.user?.role) {
       res.status(403).json({ error: 'Insufficient permissions' });
@@ -19,8 +19,8 @@ router.get('/', requireAuth, async (req: AuthRequest, res: Response) => {
 
     const placements = await prisma.placement.findMany({
       where: {
-        ...(req.user?.role === 'SPONSOR' && { campaign: { sponsorId: req.user.sponsorId } }),
-        ...(req.user?.role === 'PUBLISHER' && { publisherId: req.user.publisherId }),
+        ...(req.user.role === 'SPONSOR' && { campaign: { sponsorId: req.user.sponsorId } }),
+        ...(req.user.role === 'PUBLISHER' && { publisherId: req.user.publisherId }),
         ...(isEnumValue(status, PlacementStatus) && { status }),
       },
       include: {
@@ -41,8 +41,14 @@ router.get('/', requireAuth, async (req: AuthRequest, res: Response) => {
 
 // POST /api/placements - Create new placement (sponsors only)
 // publisherId is derived from the ad slot — never trusted from the client
-router.post('/', requireAuth, roleMiddleware(['SPONSOR']), async (req: AuthRequest, res: Response) => {
+router.post('/', requireAuth, roleMiddleware(['SPONSOR']), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
+    const sponsorId = req.user?.sponsorId;
+    if (!sponsorId) {
+      res.status(403).json({ error: 'Sponsor profile not found' });
+      return;
+    }
+
     const { campaignId, creativeId, adSlotId, agreedPrice, pricingModel, startDate, endDate } = req.body;
 
     if (!campaignId || !creativeId || !adSlotId || !agreedPrice) {
@@ -58,7 +64,7 @@ router.post('/', requireAuth, roleMiddleware(['SPONSOR']), async (req: AuthReque
       select: { sponsorId: true },
     });
 
-    if (!campaign || campaign.sponsorId !== req.user!.sponsorId) {
+    if (!campaign || campaign.sponsorId !== sponsorId) {
       res.status(403).json({ error: 'Access denied' });
       return;
     }

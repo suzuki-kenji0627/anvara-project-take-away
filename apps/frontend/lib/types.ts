@@ -38,7 +38,7 @@ export interface DashboardStats {
     totalImpressions: number;
     totalClicks: number;
     totalConversions: number;
-    avgCtr: number | string;
+    avgCtr: number;
   };
 }
 
