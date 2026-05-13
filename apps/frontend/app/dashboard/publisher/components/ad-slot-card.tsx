@@ -6,6 +6,7 @@ import { useFormStatus } from 'react-dom';
 import { deleteAdSlotAction, type ActionState } from '../actions';
 import { AdSlotForm } from './ad-slot-form';
 import { Modal } from '@/app/components/modal';
+import { cn, formatPrice } from '@/lib/utils';
 
 interface AdSlotCardProps {
   adSlot: {
@@ -48,7 +49,7 @@ export function AdSlotCard({ adSlot }: AdSlotCardProps) {
       <div className="rounded-lg border border-[--color-border] p-4">
         <div className="mb-2 flex items-start justify-between">
           <h3 className="font-semibold">{adSlot.name}</h3>
-          <span className={`rounded px-2 py-0.5 text-xs ${typeColors[adSlot.type] || 'bg-gray-100'}`}>
+          <span className={cn('rounded px-2 py-0.5 text-xs', typeColors[adSlot.type] || 'bg-gray-100')}>
             {adSlot.type}
           </span>
         </div>
@@ -58,11 +59,11 @@ export function AdSlotCard({ adSlot }: AdSlotCardProps) {
         )}
 
         <div className="flex items-center justify-between">
-          <span className={`text-sm ${adSlot.isAvailable ? 'text-green-600' : 'text-[--color-muted]'}`}>
+          <span className={cn('text-sm', adSlot.isAvailable ? 'text-green-600' : 'text-[--color-muted]')}>
             {adSlot.isAvailable ? 'Available' : 'Booked'}
           </span>
           <span className="font-semibold text-[--color-primary]">
-            ${Number(adSlot.basePrice).toLocaleString()}/mo
+            {formatPrice(Number(adSlot.basePrice))}/mo
           </span>
         </div>
 

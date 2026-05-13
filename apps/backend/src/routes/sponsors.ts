@@ -1,6 +1,6 @@
 import { Router, type Response, type IRouter } from 'express';
 import { prisma } from '../db.js';
-import { getParam } from '../utils/helpers.js';
+import { getParam, isValidEmail } from '../utils/helpers.js';
 import { requireAuth, type AuthRequest } from '../auth.js';
 
 const router: IRouter = Router();
@@ -67,6 +67,11 @@ router.post('/', requireAuth, async (req: AuthRequest, res: Response) => {
 
     if (!name || !email) {
       res.status(400).json({ error: 'Name and email are required' });
+      return;
+    }
+
+    if (!isValidEmail(email)) {
+      res.status(400).json({ error: 'Invalid email address' });
       return;
     }
 

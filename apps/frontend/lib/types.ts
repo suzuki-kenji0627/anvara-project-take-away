@@ -13,6 +13,7 @@ export interface Campaign {
   status: 'DRAFT' | 'ACTIVE' | 'PAUSED' | 'COMPLETED';
   startDate: string;
   endDate: string;
+  createdAt?: string;
   sponsorId: string;
   sponsor?: { id: string; name: string };
 }

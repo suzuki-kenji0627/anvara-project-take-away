@@ -6,6 +6,7 @@ import { useFormStatus } from 'react-dom';
 import { deleteCampaignAction, type ActionState } from '../actions';
 import { CampaignForm } from './campaign-form';
 import { Modal } from '@/app/components/modal';
+import { cn, formatPrice, formatRelativeTime } from '@/lib/utils';
 
 interface CampaignCardProps {
   campaign: {
@@ -19,6 +20,7 @@ interface CampaignCardProps {
     status: string;
     startDate: string;
     endDate: string;
+    createdAt?: string;
   };
 }
 
@@ -56,7 +58,7 @@ export function CampaignCard({ campaign }: CampaignCardProps) {
         <div className="mb-2 flex items-start justify-between">
           <h3 className="font-semibold">{campaign.name}</h3>
           <span
-            className={`rounded px-2 py-0.5 text-xs ${statusColors[campaign.status] || 'bg-gray-100'}`}
+            className={cn('rounded px-2 py-0.5 text-xs', statusColors[campaign.status] || 'bg-gray-100')}
           >
             {campaign.status}
           </span>
@@ -70,7 +72,7 @@ export function CampaignCard({ campaign }: CampaignCardProps) {
           <div className="flex justify-between text-sm">
             <span className="text-[--color-muted]">Budget</span>
             <span>
-              ${Number(campaign.spent).toLocaleString()} / ${Number(campaign.budget).toLocaleString()}
+              {formatPrice(Number(campaign.spent))} / {formatPrice(Number(campaign.budget))}
             </span>
           </div>
           <div className="mt-1 h-1.5 rounded-full bg-gray-200">
@@ -84,6 +86,9 @@ export function CampaignCard({ campaign }: CampaignCardProps) {
         <div className="text-xs text-[--color-muted]">
           {new Date(campaign.startDate).toLocaleDateString('en-US')} -{' '}
           {new Date(campaign.endDate).toLocaleDateString('en-US')}
+          {campaign.createdAt && (
+            <span className="ml-2">· Created {formatRelativeTime(new Date(campaign.createdAt))}</span>
+          )}
         </div>
 
         {deleteState.error && (

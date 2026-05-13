@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { authClient } from '@/auth-client';
+import { truncate } from '@/lib/utils';
 
 type UserRole = 'sponsor' | 'publisher' | null;
 
@@ -65,7 +66,7 @@ export function Nav() {
           ) : user ? (
             <div className="flex items-center gap-4">
               <span className="text-sm text-[--color-muted]">
-                {user.name} {role && `(${role})`}
+                {truncate(user.name ?? '', 24)} {role && `(${role})`}
               </span>
               <button
                 onClick={async () => {

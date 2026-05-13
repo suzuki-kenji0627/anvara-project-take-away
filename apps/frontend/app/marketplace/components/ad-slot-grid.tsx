@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { getAvailableAdSlots, ApiError } from '@/lib/api';
 import { AdSlot } from '@/lib/types';
 import { AdSlotGridSkeleton } from './ad-slot-grid-skeleton';
+import { cn, formatPrice } from '@/lib/utils';
 
 const typeColors: Record<string, string> = {
   DISPLAY: 'bg-blue-100 text-blue-700',
@@ -141,7 +142,7 @@ export function AdSlotGrid() {
           <div className="mb-2 flex items-start justify-between">
             <h3 className="font-semibold">{slot.name}</h3>
             <span
-              className={`rounded px-2 py-0.5 text-xs ${typeColors[slot.type] || 'bg-gray-100'}`}
+              className={cn('rounded px-2 py-0.5 text-xs', typeColors[slot.type] || 'bg-gray-100')}
             >
               {slot.type}
             </span>
@@ -157,12 +158,12 @@ export function AdSlotGrid() {
 
           <div className="flex items-center justify-between">
             <span
-              className={`text-sm ${slot.isAvailable ? 'text-green-600' : 'text-[--color-muted]'}`}
+              className={cn('text-sm', slot.isAvailable ? 'text-green-600' : 'text-[--color-muted]')}
             >
               {slot.isAvailable ? 'Available' : 'Booked'}
             </span>
             <span className="font-semibold text-[--color-primary]">
-              ${Number(slot.basePrice).toLocaleString()}/mo
+              {formatPrice(Number(slot.basePrice))}/mo
             </span>
           </div>
         </Link>

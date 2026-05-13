@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { getAdSlot } from '@/lib/api';
 import { authClient } from '@/auth-client';
-import { logger } from '@/lib/utils';
+import { cn, formatPrice, logger } from '@/lib/utils';
 
 interface AdSlot {
   id: string;
@@ -229,7 +229,7 @@ export function AdSlotDetail({ id }: Props) {
               </p>
             )}
           </div>
-          <span className={`rounded px-3 py-1 text-sm ${typeColors[adSlot.type] || 'bg-gray-100'}`}>
+          <span className={cn('rounded px-3 py-1 text-sm', typeColors[adSlot.type] || 'bg-gray-100')}>
             {adSlot.type}
           </span>
         </div>
@@ -239,7 +239,7 @@ export function AdSlotDetail({ id }: Props) {
         <div className="flex items-center justify-between border-t border-[--color-border] pt-4">
           <div>
             <span
-              className={`text-sm font-medium ${adSlot.isAvailable ? 'text-green-600' : 'text-[--color-muted]'}`}
+              className={cn('text-sm font-medium', adSlot.isAvailable ? 'text-green-600' : 'text-[--color-muted]')}
             >
               {adSlot.isAvailable ? '● Available' : '○ Currently Booked'}
             </span>
@@ -254,7 +254,7 @@ export function AdSlotDetail({ id }: Props) {
           </div>
           <div className="text-right">
             <p className="text-2xl font-bold text-[--color-primary]">
-              ${Number(adSlot.basePrice).toLocaleString()}
+              {formatPrice(Number(adSlot.basePrice))}
             </p>
             <p className="text-sm text-[--color-muted]">per month</p>
           </div>
