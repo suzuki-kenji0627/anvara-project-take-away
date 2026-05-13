@@ -2,31 +2,47 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import { usePathname } from 'next/navigation';
 import { authClient } from '@/auth-client';
-import { truncate } from '@/lib/utils';
+import { cn, truncate } from '@/lib/utils';
 import type { UserRole } from '@/lib/auth-helpers';
 
 export function Nav() {
   const { data: session, isPending } = authClient.useSession();
   const user = session?.user;
   const [role, setRole] = useState<UserRole>(null);
+  const pathname = usePathname();
 
-  // TODO: Convert to server component and fetch role server-side
-  // Fetch user role from backend when user is logged in
   useEffect(() => {
     if (user?.id) {
       fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4291'}/api/auth/role/${user.id}`
+        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4291'}/api/auth/role/${user.id}`,
+        { credentials: 'include' }
       )
         .then((res) => res.json())
-        .then((data) => setRole(data.role))
+        .then((data: { role: UserRole }) => setRole(data.role))
         .catch(() => setRole(null));
     }
-    // all usages of role is guarded by user &&. So it's safe
   }, [user?.id]);
 
-  // TODO: Add active link styling using usePathname() from next/navigation
-  // The current page's link should be highlighted differently
+  const navLink = (href: string, label: string) => {
+    const isActive = pathname === href || pathname.startsWith(`${href}/`);
+    return (
+      <Link
+        href={href}
+        aria-current={isActive ? 'page' : undefined}
+        style={isActive ? { color: 'var(--color-primary)' } : undefined}
+        className={cn(
+          'border-b-2 pb-0.5 text-sm transition-colors',
+          isActive
+            ? 'border-[--color-primary] font-medium'
+            : 'border-transparent text-[--color-muted] hover:text-[--color-foreground]'
+        )}
+      >
+        {label}
+      </Link>
+    );
+  };
 
   return (
     <header className="border-b border-[--color-border]">
@@ -36,29 +52,10 @@ export function Nav() {
         </Link>
 
         <div className="flex items-center gap-6">
-          <Link
-            href="/marketplace"
-            className="text-[--color-muted] hover:text-[--color-foreground]"
-          >
-            Marketplace
-          </Link>
+          {navLink('/marketplace', 'Marketplace')}
 
-          {user && role === 'sponsor' && (
-            <Link
-              href="/dashboard/sponsor"
-              className="text-[--color-muted] hover:text-[--color-foreground]"
-            >
-              My Campaigns
-            </Link>
-          )}
-          {user && role === 'publisher' && (
-            <Link
-              href="/dashboard/publisher"
-              className="text-[--color-muted] hover:text-[--color-foreground]"
-            >
-              My Ad Slots
-            </Link>
-          )}
+          {user && role === 'sponsor' && navLink('/dashboard/sponsor', 'My Campaigns')}
+          {user && role === 'publisher' && navLink('/dashboard/publisher', 'My Ad Slots')}
 
           {isPending ? (
             <span className="text-[--color-muted]">...</span>
