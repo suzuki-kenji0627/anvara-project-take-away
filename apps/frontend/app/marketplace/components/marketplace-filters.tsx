@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { debounce } from '@/lib/utils';
 
 const AD_SLOT_TYPES = ['DISPLAY', 'VIDEO', 'NEWSLETTER', 'PODCAST'] as const;
@@ -18,20 +18,22 @@ export function MarketplaceFilters({
   const searchParams = useSearchParams();
   const [search, setSearch] = useState(initialSearch ?? '');
 
-  function pushParams(updates: Record<string, string | undefined>) {
-    const params = new URLSearchParams(searchParams.toString());
-    for (const [k, v] of Object.entries(updates)) {
-      if (v) params.set(k, v);
-      else params.delete(k);
-    }
-    const qs = params.toString();
-    router.push(`${pathname}${qs ? `?${qs}` : ''}`);
-  }
+  const pushParams = useCallback(
+    (updates: Record<string, string | undefined>) => {
+      const params = new URLSearchParams(searchParams.toString());
+      for (const [k, v] of Object.entries(updates)) {
+        if (v) params.set(k, v);
+        else params.delete(k);
+      }
+      const qs = params.toString();
+      router.push(`${pathname}${qs ? `?${qs}` : ''}`);
+    },
+    [router, pathname, searchParams]
+  );
 
   const debouncedSearch = useMemo(
     () => debounce((value: string) => pushParams({ search: value || undefined }), 350),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [pathname, searchParams]
+    [pushParams]
   );
 
   return (
