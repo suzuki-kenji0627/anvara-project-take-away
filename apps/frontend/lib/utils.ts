@@ -14,6 +14,15 @@ export function truncate(text: string, maxLength: number): string {
   return text.slice(0, maxLength) + '...';
 }
 
+// Returns a debounced version of fn that delays invocation by `delay` ms
+export function debounce<T extends (...args: Parameters<T>) => void>(fn: T, delay: number): (...args: Parameters<T>) => void {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  return (...args: Parameters<T>) => {
+    clearTimeout(timer);
+    timer = setTimeout(() => fn(...args), delay);
+  };
+}
+
 // Class name helper (simple cn alternative)
 export function cn(...classes: (string | undefined | null | false | 0)[]): string {
   return classes.filter(Boolean).join(' ');

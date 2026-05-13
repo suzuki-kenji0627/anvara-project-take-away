@@ -1,10 +1,5 @@
-'use client';
-
-import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { getAvailableAdSlots, ApiError } from '@/lib/api';
 import { AdSlot } from '@/lib/types';
-import { AdSlotGridSkeleton } from './ad-slot-grid-skeleton';
 import { cn, formatPrice } from '@/lib/utils';
 
 const typeColors: Record<string, string> = {
@@ -14,37 +9,13 @@ const typeColors: Record<string, string> = {
   PODCAST: 'bg-orange-100 text-orange-700',
 };
 
-export function AdSlotGrid() {
-  const [adSlots, setAdSlots] = useState<AdSlot[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [isUnauthenticated, setIsUnauthenticated] = useState(false);
-  const [retryKey, setRetryKey] = useState(0);
+interface AdSlotGridProps {
+  adSlots: AdSlot[];
+  isUnauthenticated?: boolean;
+  error?: string | null;
+}
 
-  useEffect(() => {
-    getAvailableAdSlots()
-      .then((slots) => { setAdSlots(slots); setLoading(false); })
-      .catch((err) => {
-        if (err instanceof ApiError && err.status === 401) {
-          setIsUnauthenticated(true);
-        } else {
-          setError('Failed to load ad slots');
-        }
-        setLoading(false);
-      });
-  }, [retryKey]);
-
-  const retry = () => {
-    setLoading(true);
-    setError(null);
-    setIsUnauthenticated(false);
-    setRetryKey((k) => k + 1);
-  };
-
-  if (loading) {
-    return <AdSlotGridSkeleton />;
-  }
-
+export function AdSlotGrid({ adSlots, isUnauthenticated, error }: AdSlotGridProps) {
   if (isUnauthenticated) {
     return (
       <div className="rounded-lg border border-[--color-border] p-8 text-center">
@@ -65,13 +36,13 @@ export function AdSlotGrid() {
         <p className="mb-4 text-sm text-[--color-muted]">
           You need to be logged in to view available ad slots.
         </p>
-        <a
+        <Link
           href="/login"
           className="inline-block rounded-lg px-4 py-2 text-sm font-medium text-white hover:opacity-90"
           style={{ backgroundColor: 'var(--color-primary)' }}
         >
           Sign in
-        </a>
+        </Link>
       </div>
     );
   }
@@ -93,16 +64,14 @@ export function AdSlotGrid() {
           />
         </svg>
         <h3 className="mb-1 font-semibold text-red-700">Couldn&apos;t load the marketplace</h3>
-        <p className="mb-4 text-sm text-red-600">
-          There was a problem fetching ad slots. Please try again.
-        </p>
-        <button
-          onClick={retry}
-          className="rounded-lg px-4 py-2 text-sm font-medium text-white hover:opacity-90"
+        <p className="mb-4 text-sm text-red-600">{error}</p>
+        <a
+          href="/marketplace"
+          className="inline-block rounded-lg px-4 py-2 text-sm font-medium text-white hover:opacity-90"
           style={{ backgroundColor: 'var(--color-primary)' }}
         >
           Try again
-        </button>
+        </a>
       </div>
     );
   }
@@ -125,7 +94,7 @@ export function AdSlotGrid() {
         </svg>
         <h3 className="mb-1 text-lg font-semibold">No ad slots available</h3>
         <p className="text-sm text-[--color-muted]">
-          There are no ad slots listed right now. Check back soon.
+          No ad slots match your filters. Try adjusting your search.
         </p>
       </div>
     );

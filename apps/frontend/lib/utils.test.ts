@@ -1,9 +1,10 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import {
   formatPrice,
   truncate,
   cn,
   formatRelativeTime,
+  debounce,
 } from './utils';
 
 describe('formatPrice', () => {
@@ -58,6 +59,36 @@ describe('cn', () => {
 
   it('returns a single class name unchanged', () => {
     expect(cn('only')).toBe('only');
+  });
+});
+
+describe('debounce', () => {
+  it('calls the function after the delay', () => {
+    vi.useFakeTimers();
+    const fn = vi.fn();
+    const debounced = debounce(fn, 300);
+
+    debounced('a');
+    expect(fn).not.toHaveBeenCalled();
+    vi.advanceTimersByTime(300);
+    expect(fn).toHaveBeenCalledWith('a');
+
+    vi.useRealTimers();
+  });
+
+  it('only calls once when invoked multiple times within the delay', () => {
+    vi.useFakeTimers();
+    const fn = vi.fn();
+    const debounced = debounce(fn, 300);
+
+    debounced('a');
+    debounced('b');
+    debounced('c');
+    vi.advanceTimersByTime(300);
+    expect(fn).toHaveBeenCalledTimes(1);
+    expect(fn).toHaveBeenCalledWith('c');
+
+    vi.useRealTimers();
   });
 });
 

@@ -39,17 +39,32 @@ router.get('/', requireAuth, roleMiddleware(['PUBLISHER']), async (req: AuthRequ
 
 // GET /api/ad-slots/available - List available ad slots for the marketplace
 // Publishers see their own available slots; sponsors see all available slots
-router.get('/available', requireAuth, async (req: AuthRequest, res: Response) => {
+// Query params: type (AdSlotType), search (string — matches name, description, publisher name)
+router.get('/available', requireAuth, async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const publisherId = req.user?.publisherId
+    const publisherId = req.user?.publisherId;
+    const { type, search } = req.query;
 
-    const where =
+    const baseWhere =
       req.user?.role === 'PUBLISHER' && publisherId
-        ? { isAvailable: true, publisherId: publisherId }
+        ? { isAvailable: true, publisherId }
         : { isAvailable: true };
 
+    const typeFilter = isEnumValue(type, AdSlotType) ? { type } : {};
+
+    const searchTerm = typeof search === 'string' ? search.trim() : '';
+    const searchFilter = searchTerm
+      ? {
+          OR: [
+            { name: { contains: searchTerm, mode: 'insensitive' as const } },
+            { description: { contains: searchTerm, mode: 'insensitive' as const } },
+            { publisher: { name: { contains: searchTerm, mode: 'insensitive' as const } } },
+          ],
+        }
+      : {};
+
     const adSlots = await prisma.adSlot.findMany({
-      where,
+      where: { ...baseWhere, ...typeFilter, ...searchFilter },
       include: {
         publisher: { select: { id: true, name: true, category: true, monthlyViews: true } },
         _count: { select: { placements: true } },
