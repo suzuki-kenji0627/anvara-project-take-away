@@ -27,42 +27,38 @@ export interface AuthRequest extends Request {
   };
 }
 
-export async function authMiddleware(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
-  const session = await auth.api.getSession({
-    headers: fromNodeHeaders(req.headers),
-  });
+export async function requireAuth(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const session = await auth.api.getSession({
+      headers: fromNodeHeaders(req.headers),
+    });
 
-  if (!session?.user) {
-    res.status(401).json({ error: 'Unauthorized' });
-    return;
-  }
+    if (!session?.user) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
 
-  const { id, email } = session.user;
+    const { id, email } = session.user;
 
-  const sponsor = await prisma.sponsor.findUnique({
-    where: { userId: id },
-    select: { id: true },
-  });
+    // parallel calls, to reduce latency
+    const [sponsor, publisher] = await Promise.all([
+      prisma.sponsor.findUnique({ where: { userId: id }, select: { id: true } }),
+      prisma.publisher.findUnique({ where: { userId: id }, select: { id: true } }),
+    ]);
 
-  if (sponsor) {
-    req.user = { id, email, role: 'SPONSOR', sponsorId: sponsor.id };
+    if (sponsor) {
+      req.user = { id, email, role: 'SPONSOR', sponsorId: sponsor.id };
+    } else if (publisher) {
+      req.user = { id, email, role: 'PUBLISHER', publisherId: publisher.id };
+    } else {
+      req.user = { id, email };
+    }
+
     next();
-    return;
+  } catch (err) {
+    console.error('[requireAuth] Auth check failed:', err);
+    res.status(500).json({ error: 'Authentication service unavailable' });
   }
-
-  const publisher = await prisma.publisher.findUnique({
-    where: { userId: id },
-    select: { id: true },
-  });
-
-  if (publisher) {
-    req.user = { id, email, role: 'PUBLISHER', publisherId: publisher.id };
-    next();
-    return;
-  }
-
-  req.user = { id, email };
-  next();
 }
 
 export function roleMiddleware(allowedRoles: Array<'SPONSOR' | 'PUBLISHER'>) {

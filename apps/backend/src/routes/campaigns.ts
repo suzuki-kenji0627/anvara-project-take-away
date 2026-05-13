@@ -1,12 +1,12 @@
 import { Router, type Response, type IRouter } from 'express';
 import { prisma } from '../db.js';
 import { getParam } from '../utils/helpers.js';
-import { authMiddleware, roleMiddleware, type AuthRequest } from '../auth.js';
+import { requireAuth, roleMiddleware, type AuthRequest } from '../auth.js';
 
 const router: IRouter = Router();
 
 // GET /api/campaigns - List campaigns for the authenticated sponsor
-router.get('/', authMiddleware, roleMiddleware(['SPONSOR']), async (req: AuthRequest, res: Response) => {
+router.get('/', requireAuth, roleMiddleware(['SPONSOR']), async (req: AuthRequest, res: Response) => {
   try {
     const { status } = req.query;
 
@@ -30,7 +30,7 @@ router.get('/', authMiddleware, roleMiddleware(['SPONSOR']), async (req: AuthReq
 });
 
 // GET /api/campaigns/:id - Get single campaign (must belong to authenticated sponsor)
-router.get('/:id', authMiddleware, roleMiddleware(['SPONSOR']), async (req: AuthRequest, res: Response) => {
+router.get('/:id', requireAuth, roleMiddleware(['SPONSOR']), async (req: AuthRequest, res: Response) => {
   try {
     const id = getParam(req.params.id);
     const campaign = await prisma.campaign.findUnique({
@@ -66,7 +66,7 @@ router.get('/:id', authMiddleware, roleMiddleware(['SPONSOR']), async (req: Auth
 });
 
 // POST /api/campaigns - Create new campaign for the authenticated sponsor
-router.post('/', authMiddleware, roleMiddleware(['SPONSOR']), async (req: AuthRequest, res: Response) => {
+router.post('/', requireAuth, roleMiddleware(['SPONSOR']), async (req: AuthRequest, res: Response) => {
   try {
     const {
       name,
@@ -119,7 +119,7 @@ router.post('/', authMiddleware, roleMiddleware(['SPONSOR']), async (req: AuthRe
 });
 
 // PUT /api/campaigns/:id - Update campaign
-router.put('/:id', authMiddleware, roleMiddleware(['SPONSOR']), async (req: AuthRequest, res: Response) => {
+router.put('/:id', requireAuth, roleMiddleware(['SPONSOR']), async (req: AuthRequest, res: Response) => {
   try {
     const id = getParam(req.params.id);
 
@@ -175,7 +175,7 @@ router.put('/:id', authMiddleware, roleMiddleware(['SPONSOR']), async (req: Auth
 });
 
 // DELETE /api/campaigns/:id - Delete campaign
-router.delete('/:id', authMiddleware, roleMiddleware(['SPONSOR']), async (req: AuthRequest, res: Response) => {
+router.delete('/:id', requireAuth, roleMiddleware(['SPONSOR']), async (req: AuthRequest, res: Response) => {
   try {
     const id = getParam(req.params.id);
 

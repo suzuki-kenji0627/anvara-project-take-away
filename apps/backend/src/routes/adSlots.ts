@@ -1,7 +1,7 @@
 import { Router, type Response, type IRouter } from 'express';
 import { prisma } from '../db.js';
 import { getParam } from '../utils/helpers.js';
-import { authMiddleware, roleMiddleware, type AuthRequest } from '../auth.js';
+import { requireAuth, roleMiddleware, type AuthRequest } from '../auth.js';
 
 const router: IRouter = Router();
 
@@ -11,7 +11,7 @@ const router: IRouter = Router();
 // Ideally, we should have two separate routes for the marketplace:
 // 1. /api/ad-slots - for authenticated users
 // 2. /api/ad-slots/public - for anyone (unauthenticated users)
-router.get('/', authMiddleware, async (req: AuthRequest, res: Response) => {
+router.get('/', requireAuth, async (req: AuthRequest, res: Response) => {
   try {
     const { type, available } = req.query;
 
@@ -38,7 +38,7 @@ router.get('/', authMiddleware, async (req: AuthRequest, res: Response) => {
 });
 
 // GET /api/ad-slots/:id - Get single ad slot (any authenticated user — needed for marketplace)
-router.get('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
+router.get('/:id', requireAuth, async (req: AuthRequest, res: Response) => {
   try {
     const id = getParam(req.params.id);
     const adSlot = await prisma.adSlot.findUnique({
@@ -66,7 +66,7 @@ router.get('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
 });
 
 // POST /api/ad-slots - Create new ad slot (publishers only)
-router.post('/', authMiddleware, roleMiddleware(['PUBLISHER']), async (req: AuthRequest, res: Response) => {
+router.post('/', requireAuth, roleMiddleware(['PUBLISHER']), async (req: AuthRequest, res: Response) => {
   try {
     const { name, description, type, basePrice } = req.body;
 
@@ -98,7 +98,7 @@ router.post('/', authMiddleware, roleMiddleware(['PUBLISHER']), async (req: Auth
 });
 
 // POST /api/ad-slots/:id/book - Book an ad slot (sponsors only)
-router.post('/:id/book', authMiddleware, roleMiddleware(['SPONSOR']), async (req: AuthRequest, res: Response) => {
+router.post('/:id/book', requireAuth, roleMiddleware(['SPONSOR']), async (req: AuthRequest, res: Response) => {
   try {
     const id = getParam(req.params.id);
     const { message } = req.body;
@@ -140,7 +140,7 @@ router.post('/:id/book', authMiddleware, roleMiddleware(['SPONSOR']), async (req
 });
 
 // POST /api/ad-slots/:id/unbook - Reset ad slot to available (publishers only)
-router.post('/:id/unbook', authMiddleware, roleMiddleware(['PUBLISHER']), async (req: AuthRequest, res: Response) => {
+router.post('/:id/unbook', requireAuth, roleMiddleware(['PUBLISHER']), async (req: AuthRequest, res: Response) => {
   try {
     const id = getParam(req.params.id);
 
@@ -179,7 +179,7 @@ router.post('/:id/unbook', authMiddleware, roleMiddleware(['PUBLISHER']), async 
 });
 
 // PUT /api/ad-slots/:id - Update ad slot (publishers only)
-router.put('/:id', authMiddleware, roleMiddleware(['PUBLISHER']), async (req: AuthRequest, res: Response) => {
+router.put('/:id', requireAuth, roleMiddleware(['PUBLISHER']), async (req: AuthRequest, res: Response) => {
   try {
     const id = getParam(req.params.id);
 
@@ -223,7 +223,7 @@ router.put('/:id', authMiddleware, roleMiddleware(['PUBLISHER']), async (req: Au
 });
 
 // DELETE /api/ad-slots/:id - Delete ad slot (publishers only)
-router.delete('/:id', authMiddleware, roleMiddleware(['PUBLISHER']), async (req: AuthRequest, res: Response) => {
+router.delete('/:id', requireAuth, roleMiddleware(['PUBLISHER']), async (req: AuthRequest, res: Response) => {
   try {
     const id = getParam(req.params.id);
 
