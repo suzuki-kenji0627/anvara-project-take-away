@@ -1,23 +1,33 @@
 import React from 'react';
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { Nav } from './components/nav';
 
-// TODO: Add ErrorBoundary wrapper for graceful error handling
-// TODO: Consider adding a loading.tsx for Suspense boundaries
-// TODO: Add Open Graph metadata for social media sharing
-// TODO: Add Twitter Card metadata
-// TODO: Consider adding favicon and app icons
-
-export const metadata: Metadata = {
-  title: 'Anvara Marketplace',
-  description: 'Sponsorship marketplace connecting sponsors with publishers',
-  // Missing: openGraph, twitter, icons, viewport, etc.
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
-  // HINT: If using React Query, you would wrap children with QueryClientProvider here
-  // See: https://tanstack.com/query/latest/docs/framework/react/guides/advanced-ssr
+export const metadata: Metadata = {
+  title: {
+    default: 'Anvara — Sponsorship Marketplace',
+    template: '%s | Anvara',
+  },
+  description: 'The sponsorship marketplace connecting sponsors with publishers. Browse ad slots, create campaigns, and grow your audience.',
+  openGraph: {
+    title: 'Anvara — Sponsorship Marketplace',
+    description: 'The sponsorship marketplace connecting sponsors with publishers.',
+    type: 'website',
+    siteName: 'Anvara',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Anvara — Sponsorship Marketplace',
+    description: 'The sponsorship marketplace connecting sponsors with publishers.',
+  },
+};
+
+export default function RootLayout({ children }: { readonly children: React.ReactNode }) {
   return (
     <html lang="en">
       <body className="min-h-screen antialiased">
