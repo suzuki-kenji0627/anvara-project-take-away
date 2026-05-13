@@ -1,12 +1,19 @@
 'use client';
 
+import { useEffect } from 'react';
+
 export default function Error({
-  error: _error,
+  error,
   reset,
 }: {
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  useEffect(() => {
+    // eslint-disable-next-line no-console
+    console.error(error);
+  }, [error]);
+
   return (
     <div className="rounded-lg border border-red-200 bg-red-50 p-8 text-center">
       <svg
