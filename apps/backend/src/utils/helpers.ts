@@ -9,8 +9,7 @@ export function getParam(param: unknown): string {
 }
 
 // Helper to format currency values
-// FIXME: 'amount' has implicit 'any' type - should be 'number'
-export function formatCurrency(amount: number, currency = 'USD') {
+export function formatCurrency(amount: number, currency = 'USD'): string {
   const formatter = new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency,
@@ -19,15 +18,12 @@ export function formatCurrency(amount: number, currency = 'USD') {
 }
 
 // Helper to calculate percentage change
-// BUG: Unused variable 'unusedVariable' should be removed
-// FIXME: Parameters have implicit 'any' types
-export function calculatePercentChange(oldValue: number, newValue: number) {
+export function calculatePercentChange(oldValue: number, newValue: number): number {
   if (oldValue === 0) return newValue > 0 ? 100 : 0;
   return ((newValue - oldValue) / oldValue) * 100;
 }
 
 // Parse pagination params from query
-// FIXME: 'query' has implicit 'any' type - should be typed
 export function parsePagination(query: {page: string , limit: string}) {
   const page = parseInt(query.page) || 1;
   const limit = parseInt(query.limit) || 10;
@@ -37,14 +33,12 @@ export function parsePagination(query: {page: string , limit: string}) {
 }
 
 // Validate email format
-// FIXME: 'email' should be typed as 'string' not 'any'
 export function isValidEmail(email: string): boolean {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return emailRegex.test(email);
 }
 
 // Helper to build filter object from query params
-// FIXME: Multiple 'any' types that should be properly typed
 export const buildFilters = (query: Record<string, unknown>, allowedFields: string[]) => {
   const filters: Record<string, unknown> = {};
 
@@ -55,13 +49,6 @@ export const buildFilters = (query: Record<string, unknown>, allowedFields: stri
   }
 
   return filters;
-};
-
-// Unused export that should be removed or marked deprecated
- 
-export const DEPRECATED_CONFIG = {
-  apiVersion: 'v1',
-  timeout: 5000,
 };
 
 // BUG: This function has a logic error - it doesn't handle negative numbers correctly
