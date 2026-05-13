@@ -1,17 +1,36 @@
 import express, { type Application } from 'express';
 import cors from 'cors';
+import rateLimit from 'express-rate-limit';
 import routes from './routes/index.js';
 
 const app: Application = express();
 const PORT = process.env.BACKEND_PORT || 4291;
 
-// Middleware
-// TODO: Add rate limiting middleware to prevent abuse (e.g., express-rate-limit)
+// General rate limiter: 100 requests per minute per IP
+const limiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 100,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many requests, please try again later.' },
+});
+
+// Stricter limiter for auth endpoints: 10 requests per minute per IP
+const authLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many authentication attempts, please try again later.' },
+});
+
 app.use(cors({
   origin: process.env.FRONTEND_URL || 'http://localhost:3847',
   credentials: true,
 }));
 app.use(express.json());
+app.use('/api', limiter);
+app.use('/api/auth', authLimiter);
 
 // Mount all API routes
 app.use('/api', routes);
@@ -25,6 +44,7 @@ app.listen(PORT, () => {
   console.log('Available API endpoints:');
   console.log('  Auth:');
   console.log('    POST   /api/auth/login');
+  console.log('    GET    /api/auth/me');
   console.log('  Sponsors:');
   console.log('    GET    /api/sponsors');
   console.log('    GET    /api/sponsors/:id');
@@ -38,6 +58,7 @@ app.listen(PORT, () => {
   console.log('    POST   /api/campaigns');
   console.log('  Ad Slots:');
   console.log('    GET    /api/ad-slots');
+  console.log('    GET    /api/ad-slots/available');
   console.log('    GET    /api/ad-slots/:id');
   console.log('    POST   /api/ad-slots');
   console.log('  Placements:');
