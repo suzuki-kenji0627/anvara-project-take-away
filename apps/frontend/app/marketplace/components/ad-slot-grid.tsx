@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { getAdSlots, ApiError } from '@/lib/api';
+import { getAvailableAdSlots, ApiError } from '@/lib/api';
 import { AdSlot } from '@/lib/types';
 import { AdSlotGridSkeleton } from './ad-slot-grid-skeleton';
 
@@ -21,7 +21,7 @@ export function AdSlotGrid() {
   const [retryKey, setRetryKey] = useState(0);
 
   useEffect(() => {
-    getAdSlots()
+    getAvailableAdSlots()
       .then((slots) => { setAdSlots(slots); setLoading(false); })
       .catch((err) => {
         if (err instanceof ApiError && err.status === 401) {

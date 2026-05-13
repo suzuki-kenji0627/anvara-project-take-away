@@ -1,18 +1,19 @@
-import { Router, type Request, type Response, type IRouter } from 'express';
+import { Router, type Response, type IRouter } from 'express';
 import { prisma } from '../db.js';
-import { getParam } from '../utils/helpers.js';
+import { requireAuth, roleMiddleware, type AuthRequest } from '../auth.js';
 
 const router: IRouter = Router();
 
-// GET /api/placements - List placements
-router.get('/', async (req: Request, res: Response) => {
+// GET /api/placements - List placements scoped to the authenticated user
+// Sponsors see placements for their own campaigns; publishers see placements for their own ad slots
+router.get('/', requireAuth, async (req: AuthRequest, res: Response) => {
   try {
-    const { campaignId, publisherId, status } = req.query;
+    const { status } = req.query;
 
     const placements = await prisma.placement.findMany({
       where: {
-        ...(campaignId && { campaignId: getParam(campaignId) }),
-        ...(publisherId && { publisherId: getParam(publisherId) }),
+        ...(req.user?.role === 'SPONSOR' && { campaign: { sponsorId: req.user.sponsorId } }),
+        ...(req.user?.role === 'PUBLISHER' && { publisherId: req.user.publisherId }),
         ...(status && {
           status: status as string as
             | 'PENDING'
@@ -39,24 +40,38 @@ router.get('/', async (req: Request, res: Response) => {
   }
 });
 
-// POST /api/placements - Create new placement
-router.post('/', async (req: Request, res: Response) => {
+// POST /api/placements - Create new placement (sponsors only)
+// publisherId is derived from the ad slot — never trusted from the client
+router.post('/', requireAuth, roleMiddleware(['SPONSOR']), async (req: AuthRequest, res: Response) => {
   try {
-    const {
-      campaignId,
-      creativeId,
-      adSlotId,
-      publisherId,
-      agreedPrice,
-      pricingModel,
-      startDate,
-      endDate,
-    } = req.body;
+    const { campaignId, creativeId, adSlotId, agreedPrice, pricingModel, startDate, endDate } = req.body;
 
-    if (!campaignId || !creativeId || !adSlotId || !publisherId || !agreedPrice) {
+    if (!campaignId || !creativeId || !adSlotId || !agreedPrice) {
       res.status(400).json({
-        error: 'campaignId, creativeId, adSlotId, publisherId, and agreedPrice are required',
+        error: 'campaignId, creativeId, adSlotId, and agreedPrice are required',
       });
+      return;
+    }
+
+    // Verify the campaign belongs to the authenticated sponsor
+    const campaign = await prisma.campaign.findUnique({
+      where: { id: campaignId },
+      select: { sponsorId: true },
+    });
+
+    if (!campaign || campaign.sponsorId !== req.user!.sponsorId) {
+      res.status(403).json({ error: 'Access denied' });
+      return;
+    }
+
+    // Derive publisherId from the ad slot — not from client-provided data
+    const adSlot = await prisma.adSlot.findUnique({
+      where: { id: adSlotId },
+      select: { publisherId: true },
+    });
+
+    if (!adSlot) {
+      res.status(404).json({ error: 'Ad slot not found' });
       return;
     }
 
@@ -65,7 +80,7 @@ router.post('/', async (req: Request, res: Response) => {
         campaignId,
         creativeId,
         adSlotId,
-        publisherId,
+        publisherId: adSlot.publisherId,
         agreedPrice,
         pricingModel: pricingModel || 'CPM',
         startDate: new Date(startDate),

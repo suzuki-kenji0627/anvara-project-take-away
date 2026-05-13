@@ -5,19 +5,14 @@ import { requireAuth, roleMiddleware, type AuthRequest } from '../auth.js';
 
 const router: IRouter = Router();
 
-// GET /api/ad-slots - List ad slots
-// Publishers see only their own slots; sponsors see all available slots (marketplace) as per the requirement
-// TODO: However, the marketplace pages is also available to unauthenticated users, so what should we do?
-// Ideally, we should have two separate routes for the marketplace:
-// 1. /api/ad-slots - for authenticated users
-// 2. /api/ad-slots/public - for anyone (unauthenticated users)
-router.get('/', requireAuth, async (req: AuthRequest, res: Response) => {
+// GET /api/ad-slots - List the authenticated publisher's own ad slots
+router.get('/', requireAuth, roleMiddleware(['PUBLISHER']), async (req: AuthRequest, res: Response) => {
   try {
     const { type, available } = req.query;
 
     const adSlots = await prisma.adSlot.findMany({
       where: {
-        ...(req.user?.role === 'PUBLISHER' && { publisherId: req.user.publisherId }),
+        publisherId: req.user!.publisherId!,
         ...(type && {
           type: type as string as 'DISPLAY' | 'VIDEO' | 'NATIVE' | 'NEWSLETTER' | 'PODCAST',
         }),
@@ -37,7 +32,33 @@ router.get('/', requireAuth, async (req: AuthRequest, res: Response) => {
   }
 });
 
-// GET /api/ad-slots/:id - Get single ad slot (any authenticated user — needed for marketplace)
+// GET /api/ad-slots/available - List available ad slots for the marketplace
+// Publishers see their own available slots; sponsors see all available slots
+router.get('/available', requireAuth, async (req: AuthRequest, res: Response) => {
+  try {
+    const where =
+      req.user?.role === 'PUBLISHER'
+        ? { isAvailable: true, publisherId: req.user.publisherId! }
+        : { isAvailable: true };
+
+    const adSlots = await prisma.adSlot.findMany({
+      where,
+      include: {
+        publisher: { select: { id: true, name: true, category: true, monthlyViews: true } },
+        _count: { select: { placements: true } },
+      },
+      orderBy: { basePrice: 'desc' },
+    });
+
+    res.json(adSlots);
+  } catch (error) {
+    console.error('Error fetching available ad slots:', error);
+    res.status(500).json({ error: 'Failed to fetch available ad slots' });
+  }
+});
+
+// GET /api/ad-slots/:id - Get single ad slot
+// Publishers can only view their own slots; sponsors can view any (needed for marketplace and booking)
 router.get('/:id', requireAuth, async (req: AuthRequest, res: Response) => {
   try {
     const id = getParam(req.params.id);
@@ -55,6 +76,11 @@ router.get('/:id', requireAuth, async (req: AuthRequest, res: Response) => {
 
     if (!adSlot) {
       res.status(404).json({ error: 'Ad slot not found' });
+      return;
+    }
+
+    if (req.user?.role === 'PUBLISHER' && adSlot.publisherId !== req.user.publisherId) {
+      res.status(403).json({ error: 'Access denied' });
       return;
     }
 

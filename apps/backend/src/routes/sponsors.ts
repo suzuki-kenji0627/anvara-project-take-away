@@ -1,10 +1,12 @@
-import { Router, type Request, type Response, type IRouter } from 'express';
+import { Router, type Response, type IRouter } from 'express';
 import { prisma } from '../db.js';
+import { getParam } from '../utils/helpers.js';
+import { requireAuth, type AuthRequest } from '../auth.js';
 
 const router: IRouter = Router();
 
-// GET /api/sponsors - List all sponsors
-router.get('/', async (_req: Request, res: Response) => {
+// GET /api/sponsors - List sponsors (authenticated users only)
+router.get('/', requireAuth, async (_req: AuthRequest, res: Response) => {
   try {
     const sponsors = await prisma.sponsor.findMany({
       include: {
@@ -21,10 +23,16 @@ router.get('/', async (_req: Request, res: Response) => {
   }
 });
 
-// GET /api/sponsors/:id - Get single sponsor with campaigns
-router.get('/:id', async (req: Request, res: Response) => {
+// GET /api/sponsors/:id - Get own sponsor profile (ownership required)
+router.get('/:id', requireAuth, async (req: AuthRequest, res: Response) => {
   try {
-    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+    const id = getParam(req.params.id);
+
+    if (req.user?.sponsorId !== id) {
+      res.status(403).json({ error: 'Access denied' });
+      return;
+    }
+
     const sponsor = await prisma.sponsor.findUnique({
       where: { id },
       include: {
@@ -52,8 +60,8 @@ router.get('/:id', async (req: Request, res: Response) => {
   }
 });
 
-// POST /api/sponsors - Create new sponsor
-router.post('/', async (req: Request, res: Response) => {
+// POST /api/sponsors - Create sponsor profile for the authenticated user
+router.post('/', requireAuth, async (req: AuthRequest, res: Response) => {
   try {
     const { name, email, website, logo, description, industry } = req.body;
 
@@ -63,7 +71,7 @@ router.post('/', async (req: Request, res: Response) => {
     }
 
     const sponsor = await prisma.sponsor.create({
-      data: { name, email, website, logo, description, industry },
+      data: { name, email, website, logo, description, industry, userId: req.user!.id },
     });
 
     res.status(201).json(sponsor);
@@ -72,8 +80,5 @@ router.post('/', async (req: Request, res: Response) => {
     res.status(500).json({ error: 'Failed to create sponsor' });
   }
 });
-
-// TODO: Add PUT /api/sponsors/:id endpoint
-// Update sponsor details
 
 export default router;

@@ -61,6 +61,8 @@ export const getAdSlots = (publisherId?: string, cookieHeader?: string) =>
     publisherId ? `/api/ad-slots?publisherId=${publisherId}` : '/api/ad-slots',
     cookieHeader ? { headers: { Cookie: cookieHeader } } : undefined
   );
+export const getAvailableAdSlots = (cookieHeader?: string) =>
+  api<AdSlot[]>('/api/ad-slots/available', cookieHeader ? { headers: { Cookie: cookieHeader } } : undefined);
 export const getAdSlot = (id: string) => api<AdSlot>(`/api/ad-slots/${id}`);
 export const createAdSlot = (data: Partial<AdSlot>, cookieHeader?: string) =>
   api<AdSlot>('/api/ad-slots', {
