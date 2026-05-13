@@ -63,6 +63,13 @@ export function clampValue(value: number, min: number, max: number): number {
   return value;
 }
 
+export function isEnumValue<T extends Record<string, string>>(
+  value: unknown,
+  enumObj: T
+): value is T[keyof T] {
+  return typeof value === 'string' && Object.values(enumObj).includes(value);
+}
+
 export function formatDate(date: Date): string {
   const d = new Date(date);
   if (isNaN(d.getTime())) return 'Invalid date';

@@ -1,6 +1,7 @@
 import { Router, type Response, type IRouter } from 'express';
 import { prisma } from '../db.js';
-import { getParam } from '../utils/helpers.js';
+import { getParam, isEnumValue } from '../utils/helpers.js';
+import { AdSlotType } from '../db.js';
 import { requireAuth, roleMiddleware, type AuthRequest } from '../auth.js';
 
 const router: IRouter = Router();
@@ -13,9 +14,7 @@ router.get('/', requireAuth, roleMiddleware(['PUBLISHER']), async (req: AuthRequ
     const adSlots = await prisma.adSlot.findMany({
       where: {
         publisherId: req.user!.publisherId!,
-        ...(type && {
-          type: type as string as 'DISPLAY' | 'VIDEO' | 'NATIVE' | 'NEWSLETTER' | 'PODCAST',
-        }),
+        ...(isEnumValue(type, AdSlotType) && { type }),
         ...(available === 'true' && { isAvailable: true }),
       },
       include: {

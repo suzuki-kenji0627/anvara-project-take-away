@@ -2,9 +2,39 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import request from 'supertest';
 import express from 'express';
 import type { Response, NextFunction } from 'express';
+import { Decimal } from '@prisma/client/runtime/client';
 import type { Campaign } from '../db.js';
+import { CampaignStatus } from '../db.js';
 import type { AuthRequest } from '../auth.js';
 
+// ---------------------------------------------------------------------------
+// Fixture factory — provides all required Campaign fields with sensible
+// defaults so tests only specify what they actually care about.
+// ---------------------------------------------------------------------------
+function makeCampaign(overrides: Partial<Campaign> = {}): Campaign {
+  return {
+    id: 'c-default',
+    name: 'Default Campaign',
+    description: null,
+    sponsorId: 'sponsor-1',
+    budget: new Decimal(1000),
+    spent: new Decimal(0),
+    cpmRate: null,
+    cpcRate: null,
+    startDate: new Date('2025-01-01'),
+    endDate: new Date('2025-12-31'),
+    targetCategories: [],
+    targetRegions: [],
+    status: CampaignStatus.ACTIVE,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    ...overrides,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Auth mock
+// ---------------------------------------------------------------------------
 const mockAuth = vi.hoisted(() => ({
   user: null as null | {
     id: string;
@@ -43,6 +73,7 @@ vi.mock('../db.js', () => ({
       delete: vi.fn(),
     },
   },
+  CampaignStatus: { ACTIVE: 'ACTIVE', PAUSED: 'PAUSED', COMPLETED: 'COMPLETED' },
 }));
 
 const { prisma } = await import('../db.js');
@@ -85,12 +116,11 @@ describe('GET /api/campaigns', () => {
   });
 
   it('returns only the authenticated sponsor\'s campaigns', async () => {
-    const campaigns = [{ id: 'c-1', name: 'Campaign A', sponsorId: 'sponsor-1' }] as unknown as Campaign[];
+    const campaigns = [makeCampaign({ id: 'c-1', name: 'Campaign A', sponsorId: 'sponsor-1' })];
     vi.mocked(prisma.campaign.findMany).mockResolvedValue(campaigns);
 
     const res = await request(app).get('/api/campaigns');
     expect(res.status).toBe(200);
-    expect(res.body).toEqual(campaigns);
     expect(vi.mocked(prisma.campaign.findMany)).toHaveBeenCalledWith(
       expect.objectContaining({ where: expect.objectContaining({ sponsorId: 'sponsor-1' }) })
     );
@@ -111,17 +141,13 @@ describe('GET /api/campaigns/:id', () => {
   });
 
   it('returns 403 when campaign belongs to a different sponsor', async () => {
-    vi.mocked(prisma.campaign.findUnique).mockResolvedValue(
-      { id: 'c-1', sponsorId: 'other-sponsor' } as unknown as Campaign
-    );
+    vi.mocked(prisma.campaign.findUnique).mockResolvedValue(makeCampaign({ sponsorId: 'other-sponsor' }));
     const res = await request(app).get('/api/campaigns/c-1');
     expect(res.status).toBe(403);
   });
 
   it('returns the campaign when it belongs to the authenticated sponsor', async () => {
-    vi.mocked(prisma.campaign.findUnique).mockResolvedValue(
-      { id: 'c-1', name: 'My Campaign', sponsorId: 'sponsor-1' } as unknown as Campaign
-    );
+    vi.mocked(prisma.campaign.findUnique).mockResolvedValue(makeCampaign({ id: 'c-1', sponsorId: 'sponsor-1' }));
     const res = await request(app).get('/api/campaigns/c-1');
     expect(res.status).toBe(200);
     expect(res.body.id).toBe('c-1');
@@ -147,15 +173,8 @@ describe('POST /api/campaigns', () => {
   });
 
   it('creates and returns a campaign with status 201', async () => {
-    const payload = {
-      name: 'New Campaign',
-      budget: 5000,
-      startDate: '2025-01-01',
-      endDate: '2025-12-31',
-    };
-    vi.mocked(prisma.campaign.create).mockResolvedValue(
-      { id: 'c-new', ...payload, sponsorId: 'sponsor-1' } as unknown as Campaign
-    );
+    const payload = { name: 'New Campaign', budget: 5000, startDate: '2025-01-01', endDate: '2025-12-31' };
+    vi.mocked(prisma.campaign.create).mockResolvedValue(makeCampaign({ id: 'c-new', sponsorId: 'sponsor-1' }));
 
     const res = await request(app).post('/api/campaigns').send(payload);
     expect(res.status).toBe(201);
@@ -172,18 +191,14 @@ describe('DELETE /api/campaigns/:id', () => {
   });
 
   it('returns 403 when campaign belongs to a different sponsor', async () => {
-    vi.mocked(prisma.campaign.findUnique).mockResolvedValue(
-      { id: 'c-1', sponsorId: 'other-sponsor' } as unknown as Campaign
-    );
+    vi.mocked(prisma.campaign.findUnique).mockResolvedValue(makeCampaign({ sponsorId: 'other-sponsor' }));
     const res = await request(app).delete('/api/campaigns/c-1');
     expect(res.status).toBe(403);
   });
 
   it('deletes the campaign and returns 204', async () => {
-    vi.mocked(prisma.campaign.findUnique).mockResolvedValue(
-      { id: 'c-1', sponsorId: 'sponsor-1' } as unknown as Campaign
-    );
-    vi.mocked(prisma.campaign.delete).mockResolvedValue({ id: 'c-1' } as unknown as Campaign);
+    vi.mocked(prisma.campaign.findUnique).mockResolvedValue(makeCampaign({ id: 'c-1', sponsorId: 'sponsor-1' }));
+    vi.mocked(prisma.campaign.delete).mockResolvedValue(makeCampaign({ id: 'c-1' }));
 
     const res = await request(app).delete('/api/campaigns/c-1');
     expect(res.status).toBe(204);

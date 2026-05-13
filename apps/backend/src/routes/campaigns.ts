@@ -1,6 +1,7 @@
 import { Router, type Response, type IRouter } from 'express';
 import { prisma } from '../db.js';
-import { getParam } from '../utils/helpers.js';
+import { getParam, isEnumValue } from '../utils/helpers.js';
+import { CampaignStatus } from '../db.js';
 import { requireAuth, roleMiddleware, type AuthRequest } from '../auth.js';
 
 const router: IRouter = Router();
@@ -13,7 +14,7 @@ router.get('/', requireAuth, roleMiddleware(['SPONSOR']), async (req: AuthReques
     const campaigns = await prisma.campaign.findMany({
       where: {
         sponsorId: req.user!.sponsorId,
-        ...(status && { status: status as 'ACTIVE' | 'PAUSED' | 'COMPLETED' }),
+        ...(isEnumValue(status, CampaignStatus) && { status }),
       },
       include: {
         sponsor: { select: { id: true, name: true, logo: true } },

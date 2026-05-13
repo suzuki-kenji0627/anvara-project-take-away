@@ -1,5 +1,7 @@
 import { Router, type Response, type IRouter } from 'express';
 import { prisma } from '../db.js';
+import { isEnumValue } from '../utils/helpers.js';
+import { PlacementStatus } from '../db.js';
 import { requireAuth, roleMiddleware, type AuthRequest } from '../auth.js';
 
 const router: IRouter = Router();
@@ -19,15 +21,7 @@ router.get('/', requireAuth, async (req: AuthRequest, res: Response) => {
       where: {
         ...(req.user?.role === 'SPONSOR' && { campaign: { sponsorId: req.user.sponsorId } }),
         ...(req.user?.role === 'PUBLISHER' && { publisherId: req.user.publisherId }),
-        ...(status && {
-          status: status as string as
-            | 'PENDING'
-            | 'APPROVED'
-            | 'REJECTED'
-            | 'ACTIVE'
-            | 'PAUSED'
-            | 'COMPLETED',
-        }),
+        ...(isEnumValue(status, PlacementStatus) && { status }),
       },
       include: {
         campaign: { select: { id: true, name: true } },
