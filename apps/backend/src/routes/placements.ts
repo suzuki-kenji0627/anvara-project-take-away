@@ -8,6 +8,11 @@ const router: IRouter = Router();
 // Sponsors see placements for their own campaigns; publishers see placements for their own ad slots
 router.get('/', requireAuth, async (req: AuthRequest, res: Response) => {
   try {
+    if (!req.user?.role) {
+      res.status(403).json({ error: 'Insufficient permissions' });
+      return;
+    }
+
     const { status } = req.query;
 
     const placements = await prisma.placement.findMany({
