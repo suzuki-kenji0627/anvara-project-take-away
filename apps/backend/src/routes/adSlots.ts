@@ -7,7 +7,7 @@ import { requireAuth, roleMiddleware, type AuthRequest } from '../auth.js';
 const router: IRouter = Router();
 
 // GET /api/ad-slots - List the authenticated publisher's own ad slots
-router.get('/', requireAuth, roleMiddleware(['PUBLISHER']), async (req: AuthRequest, res: Response) => {
+router.get('/', requireAuth, roleMiddleware(['PUBLISHER']), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const publisherId = req.user?.publisherId;
     if (!publisherId) {
@@ -157,24 +157,26 @@ router.post('/:id/book', requireAuth, roleMiddleware(['SPONSOR']), async (req: A
     const id = getParam(req.params.id);
     const { message } = req.body;
 
-    const adSlot = await prisma.adSlot.findUnique({
-      where: { id },
-      include: { publisher: true },
-    });
-
-    if (!adSlot) {
+    const exists = await prisma.adSlot.findUnique({ where: { id }, select: { id: true } });
+    if (!exists) {
       res.status(404).json({ error: 'Ad slot not found' });
       return;
     }
 
-    if (!adSlot.isAvailable) {
+    // Atomic check-and-update: only succeeds if isAvailable is still true,
+    // preventing double-booking under concurrent requests.
+    const { count } = await prisma.adSlot.updateMany({
+      where: { id, isAvailable: true },
+      data: { isAvailable: false },
+    });
+
+    if (count === 0) {
       res.status(400).json({ error: 'Ad slot is no longer available' });
       return;
     }
 
-    const updatedSlot = await prisma.adSlot.update({
+    const updatedSlot = await prisma.adSlot.findUnique({
       where: { id },
-      data: { isAvailable: false },
       include: {
         publisher: { select: { id: true, name: true } },
       },
