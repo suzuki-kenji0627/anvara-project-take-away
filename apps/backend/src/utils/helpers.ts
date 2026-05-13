@@ -1,7 +1,6 @@
 // Utility helpers for the API
 
 // Helper to safely extract route/query params
-// BUG: Return type should be 'string' but function can return empty string silently
 export function getParam(param: unknown): string {
   if (typeof param === 'string') return param;
   if (Array.isArray(param) && typeof param[0] === 'string') return param[0];
@@ -24,7 +23,11 @@ export function calculatePercentChange(oldValue: number, newValue: number): numb
 }
 
 // Parse pagination params from query
-export function parsePagination(query: {page: string , limit: string}) {
+export function parsePagination(query: { page: string; limit: string }): {
+  page: number;
+  limit: number;
+  skip: number;
+} {
   const page = parseInt(query.page) || 1;
   const limit = parseInt(query.limit) || 10;
   const skip = (page - 1) * limit;
@@ -39,7 +42,10 @@ export function isValidEmail(email: string): boolean {
 }
 
 // Helper to build filter object from query params
-export const buildFilters = (query: Record<string, unknown>, allowedFields: string[]) => {
+export const buildFilters = (
+  query: Record<string, unknown>,
+  allowedFields: string[],
+): Record<string, unknown> => {
   const filters: Record<string, unknown> = {};
 
   for (const field of allowedFields) {
@@ -51,17 +57,14 @@ export const buildFilters = (query: Record<string, unknown>, allowedFields: stri
   return filters;
 };
 
-// BUG: This function has a logic error - it doesn't handle negative numbers correctly
 export function clampValue(value: number, min: number, max: number): number {
-  // Should use Math.max(min, Math.min(max, value)) but this is wrong
   if (value < min) return min;
   if (value > max) return max;
   return value;
 }
 
-// TODO: Add proper date formatting helper
-// This is a stub that candidates might notice and implement
 export function formatDate(date: Date): string {
-  // BUG: Doesn't handle invalid dates
-  return new Date(date).toLocaleDateString();
+  const d = new Date(date);
+  if (isNaN(d.getTime())) return 'Invalid date';
+  return d.toLocaleDateString();
 }
