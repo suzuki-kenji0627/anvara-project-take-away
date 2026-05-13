@@ -13,20 +13,24 @@ describe('getParam', () => {
     expect(getParam(['first', 'second'])).toBe('first');
   });
 
-  it('returns empty string for an empty array', () => {
-    expect(getParam([])).toBe('');
+  it('throws for an empty array', () => {
+    expect(() => getParam([])).toThrow();
   });
 
-  it('returns empty string for a number', () => {
-    expect(getParam(42)).toBe('');
+  it('throws for a number', () => {
+    expect(() => getParam(42)).toThrow();
   });
 
-  it('returns empty string for null', () => {
-    expect(getParam(null)).toBe('');
+  it('throws for null', () => {
+    expect(() => getParam(null)).toThrow();
   });
 
-  it('returns empty string for undefined', () => {
-    expect(getParam(undefined)).toBe('');
+  it('throws for undefined', () => {
+    expect(() => getParam(undefined)).toThrow();
+  });
+
+  it('throws for an empty string', () => {
+    expect(() => getParam('')).toThrow();
   });
 });
 
@@ -53,5 +57,13 @@ describe('isValidEmail', () => {
 
   it('rejects an email with spaces', () => {
     expect(isValidEmail('user @example.com')).toBe(false);
+  });
+
+  it('rejects a domain without a TLD', () => {
+    expect(isValidEmail('user@localhost')).toBe(false);
+  });
+
+  it('rejects a domain starting with a hyphen', () => {
+    expect(isValidEmail('user@-example.com')).toBe(false);
   });
 });
