@@ -21,9 +21,11 @@ export default async function SponsorDashboard() {
     redirect('/login');
   }
 
+  const cookieHeader = (await headers()).get('cookie') ?? undefined;
+
   let roleData: Awaited<ReturnType<typeof getUserRole>>;
   try {
-    roleData = await getUserRole(session.user.id);
+    roleData = await getUserRole(session.user.id, cookieHeader);
   } catch (err) {
     // eslint-disable-next-line no-console
     console.error('[SponsorDashboard] Role check failed:', err);
