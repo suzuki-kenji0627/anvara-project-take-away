@@ -8,30 +8,6 @@ export function formatPrice(price: number, locale = 'en-US'): string {
   }).format(price);
 }
 
-// Debounce function for search inputs
-export function debounce(fn: (...args: unknown[]) => unknown, delay: number): (...args: unknown[]) => void {
-  let timeoutId: ReturnType<typeof setTimeout>;
-  return (...args: unknown[]) => {
-    clearTimeout(timeoutId);
-    timeoutId = setTimeout(() => fn(...args), delay);
-  };
-}
-
-// Parse query string parameters
-export function parseQueryString(queryString: string): Record<string, string> {
-  const params: Record<string, string> = {};
-  const searchParams = new URLSearchParams(queryString);
-
-  searchParams.forEach((value, key) => {
-    params[key] = value;
-  });
-
-  return params;
-}
-
-// Check if we're running on the client side
-export const isClient = typeof window !== 'undefined';
-
 // Truncate text with ellipsis
 export function truncate(text: string, maxLength: number): string {
   if (text.length <= maxLength) return text;
@@ -41,15 +17,6 @@ export function truncate(text: string, maxLength: number): string {
 // Class name helper (simple cn alternative)
 export function cn(...classes: (string | undefined | null | false | 0)[]): string {
   return classes.filter(Boolean).join(' ');
-}
-
-// Sleep utility for testing/debugging
-export const sleep = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
-
-// Deep clone an object
-// NOTE: This doesn't handle circular references, dates, or functions
-export function deepClone<T>(obj: T): T {
-  return JSON.parse(JSON.stringify(obj));
 }
 
 // Logger that only logs in development
