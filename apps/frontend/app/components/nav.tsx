@@ -14,15 +14,18 @@ export function Nav() {
   const pathname = usePathname();
 
   useEffect(() => {
-    if (user?.id) {
-      fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4291'}/api/auth/role/${user.id}`,
-        { credentials: 'include' }
-      )
-        .then((res) => res.json())
-        .then((data: { role: UserRole }) => setRole(data.role))
-        .catch(() => setRole(null));
-    }
+    if (!user?.id) return;
+    const controller = new AbortController();
+    fetch(
+      `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4291'}/api/auth/role/${user.id}`,
+      { credentials: 'include', signal: controller.signal }
+    )
+      .then((res) => res.json())
+      .then((data: { role: UserRole }) => setRole(data.role))
+      .catch((err: unknown) => {
+        if (err instanceof Error && err.name !== 'AbortError') setRole(null);
+      });
+    return () => controller.abort();
   }, [user?.id]);
 
   const navLink = (href: string, label: string) => {
