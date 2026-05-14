@@ -14,7 +14,7 @@ export type ActionState = {
   success?: boolean;
 };
 
-const VALID_TYPES = ['DISPLAY', 'VIDEO', 'NEWSLETTER', 'PODCAST'] as const;
+const VALID_TYPES = ['DISPLAY', 'VIDEO', 'NATIVE', 'NEWSLETTER', 'PODCAST'] as const;
 type AdSlotType = typeof VALID_TYPES[number];
 
 function getString(fd: FormData, key: string): string | null {

@@ -4,7 +4,7 @@ import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { useCallback, useMemo, useState } from 'react';
 import { debounce } from '@/lib/utils';
 
-const AD_SLOT_TYPES = ['DISPLAY', 'VIDEO', 'NEWSLETTER', 'PODCAST'] as const;
+const AD_SLOT_TYPES = ['DISPLAY', 'VIDEO', 'NATIVE', 'NEWSLETTER', 'PODCAST'] as const;
 
 export function MarketplaceFilters({
   initialType,

@@ -31,6 +31,7 @@ interface User {
 const typeColors: Record<string, string> = {
   DISPLAY: 'bg-blue-100 text-blue-700',
   VIDEO: 'bg-red-100 text-red-700',
+  NATIVE: 'bg-green-100 text-green-700',
   NEWSLETTER: 'bg-purple-100 text-purple-700',
   PODCAST: 'bg-orange-100 text-orange-700',
 };
@@ -63,16 +64,15 @@ export function AdSlotDetail({ id }: Props) {
       .getSession()
       .then(({ data }) => {
         if (data?.user) {
-          const sessionUser = data.user as User;
-          setUser(sessionUser);
+          const { id, name, email } = data.user;
+          setUser({ id, name: name ?? '', email });
 
-          // Fetch role info from backend
           fetch(
-            `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4291'}/api/auth/role/${sessionUser.id}`,
-            { credentials: "include"}
+            `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4291'}/api/auth/role/me`,
+            { credentials: 'include' }
           )
             .then((res) => res.json())
-            .then((data) => setRoleInfo(data))
+            .then((roleData: RoleData) => setRoleInfo(roleData))
             .catch(() => setRoleInfo(null))
             .finally(() => setRoleLoading(false));
         } else {

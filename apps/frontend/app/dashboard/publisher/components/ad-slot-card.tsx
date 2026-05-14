@@ -13,7 +13,7 @@ interface AdSlotCardProps {
     id: string;
     name: string;
     description?: string;
-    type: 'DISPLAY' | 'VIDEO' | 'NEWSLETTER' | 'PODCAST';
+    type: 'DISPLAY' | 'VIDEO' | 'NATIVE' | 'NEWSLETTER' | 'PODCAST';
     basePrice: number;
     isAvailable: boolean;
   };
@@ -22,6 +22,7 @@ interface AdSlotCardProps {
 const typeColors: Record<string, string> = {
   DISPLAY: 'bg-blue-100 text-blue-700',
   VIDEO: 'bg-red-100 text-red-700',
+  NATIVE: 'bg-green-100 text-green-700',
   NEWSLETTER: 'bg-purple-100 text-purple-700',
   PODCAST: 'bg-orange-100 text-orange-700',
 };

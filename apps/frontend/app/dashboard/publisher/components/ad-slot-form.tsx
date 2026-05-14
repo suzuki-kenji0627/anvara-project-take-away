@@ -81,6 +81,7 @@ export function AdSlotForm({ adSlot, onSuccess }: AdSlotFormProps) {
           <option value="">Select type</option>
           <option value="DISPLAY">Display</option>
           <option value="VIDEO">Video</option>
+          <option value="NATIVE">Native</option>
           <option value="NEWSLETTER">Newsletter</option>
           <option value="PODCAST">Podcast</option>
         </select>
