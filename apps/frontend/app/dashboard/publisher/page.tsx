@@ -25,7 +25,7 @@ export default async function PublisherDashboard() {
 
   let roleData: Awaited<ReturnType<typeof getUserRole>>;
   try {
-    roleData = await getUserRole(session.user.id, cookieHeader);
+    roleData = await getUserRole(cookieHeader);
   } catch (err) {
     // eslint-disable-next-line no-console
     console.error('[PublisherDashboard] Role check failed:', err);

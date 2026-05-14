@@ -20,38 +20,22 @@ router.get('/me', requireAuth, async (req: AuthRequest, res: Response): Promise<
   res.json(req.user);
 });
 
-// GET /api/auth/role/:userId - Get user role based on Sponsor/Publisher records
-router.get('/role/:userId', requireAuth, async (req: Request<{ userId: string }>, res: Response): Promise<void> => {
-  try {
-    const { userId } = req.params;
+// GET /api/auth/role/me - Get the authenticated user's role and entity IDs.
+// requireAuth already resolved sponsorId/publisherId — no extra DB calls needed.
+router.get('/role/me', requireAuth, (req: AuthRequest, res: Response): void => {
+  const { role, sponsorId, publisherId } = req.user!;
 
-    // Check if user is a sponsor
-    const sponsor = await prisma.sponsor.findUnique({
-      where: { userId },
-      select: { id: true, name: true },
-    });
-
-    if (sponsor) {
-      res.json({ role: 'sponsor', sponsorId: sponsor.id, name: sponsor.name });
-      return;
-    }
-
-    // Check if user is a publisher
-    const publisher = await prisma.publisher.findUnique({
-      where: { userId },
-      select: { id: true, name: true },
-    });
-
-    if (publisher) {
-      res.json({ role: 'publisher', publisherId: publisher.id, name: publisher.name });
-      return;
-    }
-
-    res.json({ role: null });
-  } catch (error) {
-    console.error('Error fetching user role:', error);
-    res.status(500).json({ error: 'Failed to fetch user role' });
+  if (role === 'SPONSOR') {
+    res.json({ role: 'sponsor', sponsorId });
+    return;
   }
+
+  if (role === 'PUBLISHER') {
+    res.json({ role: 'publisher', publisherId });
+    return;
+  }
+
+  res.json({ role: null });
 });
 
 export default router;

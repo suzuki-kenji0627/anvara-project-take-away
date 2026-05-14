@@ -17,7 +17,7 @@ export function Nav() {
     if (!user?.id) return;
     const controller = new AbortController();
     fetch(
-      `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4291'}/api/auth/role/${user.id}`,
+      `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4291'}/api/auth/role/me`,
       { credentials: 'include', signal: controller.signal }
     )
       .then((res) => res.json())
