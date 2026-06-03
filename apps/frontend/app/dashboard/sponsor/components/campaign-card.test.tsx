@@ -36,8 +36,7 @@ describe('CampaignCard', () => {
   });
 
   it('does not render description when omitted', () => {
-    const { description: _d, ...withoutDesc } = base;
-    render(<CampaignCard campaign={withoutDesc} />);
+    render(<CampaignCard campaign={{ id: base.id, name: base.name, budget: base.budget, spent: base.spent, status: base.status, startDate: base.startDate, endDate: base.endDate }} />);
     expect(screen.queryByText('A campaign for summer')).not.toBeInTheDocument();
   });
 

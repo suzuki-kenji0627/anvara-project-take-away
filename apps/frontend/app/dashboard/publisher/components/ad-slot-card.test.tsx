@@ -49,8 +49,7 @@ describe('AdSlotCard', () => {
   });
 
   it('does not render description when omitted', () => {
-    const { description: _d, ...withoutDesc } = base;
-    render(<AdSlotCard adSlot={withoutDesc} />);
+    render(<AdSlotCard adSlot={{ id: base.id, name: base.name, type: base.type, basePrice: base.basePrice, isAvailable: base.isAvailable }} />);
     expect(screen.queryByText('Top of page banner')).not.toBeInTheDocument();
   });
 
