@@ -39,7 +39,7 @@ app.use('/api', routes);
 // SERVER STARTUP
 // ============================================================================
 
-app.listen(PORT, () => {
+if (process.env.NODE_ENV !== 'test') app.listen(PORT, () => {
   console.log(`\n🚀 Backend server running at http://localhost:${PORT}\n`);
   console.log('Available API endpoints:');
   console.log('  Auth:');
@@ -69,6 +69,6 @@ app.listen(PORT, () => {
   console.log('  Health:');
   console.log('    GET    /api/health');
   console.log('');
-});
+})
 
 export default app;
