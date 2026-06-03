@@ -9,6 +9,8 @@ node_modules/
 **/out/
 
 # Environment
+.env
+.env.local
 .env.*.local
 .env.old.*
 .setup-fingerprint
@@ -45,3 +47,6 @@ test-results/
 # Generated files
 **/generated/
 config.bat
+
+# Playwright auth state
+e2e/.auth/

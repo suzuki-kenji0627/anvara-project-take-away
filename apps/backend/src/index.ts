@@ -15,22 +15,15 @@ const limiter = rateLimit({
   message: { error: 'Too many requests, please try again later.' },
 });
 
-// Stricter limiter for auth endpoints: 10 requests per minute per IP
-const authLimiter = rateLimit({
-  windowMs: 60 * 1000,
-  max: 10,
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: { error: 'Too many authentication attempts, please try again later.' },
-});
-
 app.use(cors({
   origin: process.env.FRONTEND_URL || 'http://localhost:3847',
   credentials: true,
 }));
 app.use(express.json());
+// Brute-force protection for actual sign-in is handled by Better Auth on the Next.js layer.
+// The backend auth utility routes (/api/auth/role/me, /api/auth/me) are session checks
+// called on every page load — using the general 100/min limit is appropriate.
 app.use('/api', limiter);
-app.use('/api/auth', authLimiter);
 
 // Mount all API routes
 app.use('/api', routes);
