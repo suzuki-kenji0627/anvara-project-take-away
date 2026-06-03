@@ -34,7 +34,7 @@ vi.mock('./db.js', async () => {
 // auth.ts throws on import when DATABASE_URL is unset.
 // vi.mock replaces the entire module so the real file never executes.
 vi.mock('./auth.js', () => ({
-  requireAuth: vi.fn((req: AuthRequest, _res: Response, next: NextFunction) => {
+  requireAuth: vi.fn(async (req: AuthRequest, _res: Response, next: NextFunction) => {
     req.user = { id: 'u1', email: 'sponsor@example.com', role: 'SPONSOR', sponsorId: 'sponsor-1' };
     next();
   }),
@@ -74,7 +74,7 @@ beforeEach(() => {
   vi.mocked(prisma.$queryRaw).mockResolvedValue([{ '?column?': 1 }] as never);
   vi.mocked(prisma.campaign.findMany).mockResolvedValue([]);
   vi.mocked(prisma.adSlot.findMany).mockResolvedValue([]);
-  vi.mocked(requireAuth).mockImplementation((req, _res, next) => {
+  vi.mocked(requireAuth).mockImplementation(async (req, _res, next) => {
     req.user = { id: 'u1', email: 'sponsor@example.com', role: 'SPONSOR', sponsorId: 'sponsor-1' };
     next();
   });
@@ -188,7 +188,7 @@ describe('GET /api/health — error path', () => {
 
 describe('GET /api/campaigns — auth enforcement', () => {
   it('returns 401 when the session is invalid', async () => {
-    vi.mocked(requireAuth).mockImplementationOnce((_req, res) => {
+    vi.mocked(requireAuth).mockImplementationOnce(async (_req, res) => {
       res.status(401).json({ error: 'Unauthorized' });
     });
     const res = await request(app).get('/api/campaigns');
