@@ -32,20 +32,16 @@ export default function LoginPage() {
         onRequest: () => {
           setLoading(true);
         },
-        onSuccess: async (ctx) => {
-          // Fetch user role to determine redirect
+        onSuccess: async () => {
+          // Fetch user role to determine redirect.
+          // /api/auth/role/me resolves the role from the session cookie set by Better Auth.
           try {
-            const userId = ctx.data?.user?.id;
-            if (userId) {
-              const roleRes = await fetch(`${API_URL}/api/auth/role/${userId}`, { credentials: 'include'});
-              const roleData = await roleRes.json();
-              if (roleData.role === 'sponsor') {
-                router.push('/dashboard/sponsor');
-              } else if (roleData.role === 'publisher') {
-                router.push('/dashboard/publisher');
-              } else {
-                router.push('/');
-              }
+            const roleRes = await fetch(`${API_URL}/api/auth/role/me`, { credentials: 'include' });
+            const roleData = await roleRes.json();
+            if (roleData.role === 'sponsor') {
+              router.push('/dashboard/sponsor');
+            } else if (roleData.role === 'publisher') {
+              router.push('/dashboard/publisher');
             } else {
               router.push('/');
             }
